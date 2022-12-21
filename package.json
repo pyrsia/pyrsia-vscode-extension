@@ -1,0 +1,87 @@
+{
+  "name": "pyrsia-integration",
+  "displayName": "Pyrsia Integration",
+  "description": "Pyrsia Integration for VS Code",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:pyrsia.node"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "package-explorer",
+          "title": "Pyrsia",
+          "icon": "resources/images/pyrsia_small.svg"
+        }
+      ]
+    },
+    "views": {
+      "package-explorer": [
+        {
+          "id": "pyrsia.node",
+          "name": "Node",
+          "type": "webview"
+        },
+        {
+          "id": "pyrsia.node-config",
+          "name": "Configuration"
+        },
+        {
+          "id": "pyrsia.integrations",
+          "name": "Integrations"
+        },
+        {
+          "id": "pyrsia.help",
+          "name": "Help nad Feedback"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "pyrsia.startNode",
+        "title": "Start Pyrsia Node"
+      },
+      {
+        "command": "pyrsia.stopNode",
+        "title": "Stop Pyrsia Node"
+      },
+      {
+        "command": "pyrsia.node-config.tree.refresh",
+        "title": "Refresh"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.0.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.73.1",
+    "@typescript-eslint/eslint-plugin": "^5.47.0",
+    "@typescript-eslint/parser": "^5.47.0",
+    "@vscode/test-electron": "^2.2.0",
+    "eslint": "^8.30.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.1.0",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "@vscode/webview-ui-toolkit": "^1.2.0",
+    "axios": "^1.2.1"
+  }
+}
