@@ -1,14 +1,14 @@
 import axios from "axios";
-import * as util from "./util";
+import { Util } from "./util";
 
 // TODO This should be obtained from the pyrsia node config
 export function getNodeUrl(): string {
-  return `http://${util.getNodeConfig().hostname}:${getNodePort()}`;
+  return `http://${Util.getNodeConfig().hostname}:${getNodePort()}`;
 }
 
 // TODO This should be obtained from the pyrsia node config
 function getNodePort(): string {
-  return util.getNodeConfig().port;
+  return Util.getNodeConfig().port;
 }
 
 type PingResponse = {

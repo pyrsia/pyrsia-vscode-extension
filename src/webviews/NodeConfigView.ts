@@ -1,7 +1,7 @@
 // https://github.com/xojs/eslint-config-xo-typescript/issues/43
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
-import * as util from '../utilities/util';
+import { Util } from '../utilities/util';
 import * as client from '../utilities/client';
 
 // TODO With branches
@@ -234,7 +234,7 @@ class NodeConfigTreeProvider implements vscode.TreeDataProvider<string> {
 	}
 
 	getChildren(parentId?: string | undefined): vscode.ProviderResult<string[]> {
-		let childrenArray: string[] = [];
+		let children: string[] = [];
 		if (!parentId) { // Create all tree Items for the tree
 			for (const nodeProperty in NodeConfigProperty) { // TODO Why nodeProperty is 'string' type? Investigate
 				const treeItem = this.treeItems.get(nodeProperty.toLowerCase());
@@ -243,16 +243,16 @@ class NodeConfigTreeProvider implements vscode.TreeDataProvider<string> {
 					this.treeItems.set(nodeProperty.toLocaleLowerCase(), NodeTreeItem.create(enumType)); // TODO Why I have to do this conversion in TS? Shouldn't 'nodeProperty' be the enum type?
 				}
 			}
-			childrenArray = [... this.treeItems].map(([, value]) => {
+			children = [... this.treeItems].map(([, value]) => {
 				return value.isRoot() ? value.id : "";
 			}).filter(value => value !== "");
 		} else { // not tree root then get the particular id for the parentId
 			const childId = NodeTreeItem.getChildrenId(parentId);
 			const treeItem: NodeTreeItem = this.treeItems.get(childId) as NodeTreeItem;
-			childrenArray = [treeItem.id];
+			children = [treeItem.id];
 		}
 
-		return childrenArray;
+		return children;
 	}
 }
 
@@ -264,6 +264,7 @@ class NodeTreeItem extends vscode.TreeItem {
 		public readonly id: string,
 		public readonly root: boolean,
 		private readonly listener: NodeConfigListener,
+		public readonly iconPath: vscode.ThemeIcon,
 	) {
 		super(label, collapsibleState);
 		this.tooltip = this.label;
@@ -278,6 +279,7 @@ class NodeTreeItem extends vscode.TreeItem {
 			property.id,
 			property.root,
 			property.listener,
+			property.iconPath,
 		);
 	}
 
@@ -295,15 +297,16 @@ class NodeTreeItem extends vscode.TreeItem {
 
 	private static readonly properties = {
 		[NodeConfigProperty.Hostname.toLowerCase()]: {
-			name: "Host",
+			name: "Node",
 			id: "hostname", // NO I18
 			root: true,
 			listener: {
 				onUpdate: async (treeItem: NodeTreeItem) => {
 					const name = NodeTreeItem.properties[NodeConfigProperty.Hostname.toLowerCase()].name;
-					treeItem.label = `${name}: ${util.getNodeConfig().hostname}`;
+					treeItem.label = `${name}: ${Util.getNodeConfig().hostname}`;
 				}
-			}
+			},
+			iconPath: new vscode.ThemeIcon("cloud"),
 		},
 		[NodeConfigProperty.Port.toLowerCase()]: {
 			name: "Port",
@@ -312,9 +315,10 @@ class NodeTreeItem extends vscode.TreeItem {
 			listener: {
 				onUpdate: async (treeItem: NodeTreeItem) => {
 					const name = NodeTreeItem.properties[NodeConfigProperty.Port.toLowerCase()].name;
-					treeItem.label = `${name}: ${util.getNodeConfig().port}`;
+					treeItem.label = `${name}: ${Util.getNodeConfig().port}`;
 				}
 			},
+			iconPath: new vscode.ThemeIcon("ports-view-icon"),
 		},
 		[NodeConfigProperty.Peers.toLowerCase()]: {
 			name: "Peers Count",
@@ -329,6 +333,7 @@ class NodeTreeItem extends vscode.TreeItem {
 					console.log(`Updating - ${name}`);
 				}
 			},
+			iconPath: new vscode.ThemeIcon("extensions-install-count"),
 		},
 	};
 }

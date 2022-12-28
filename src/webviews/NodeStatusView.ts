@@ -1,20 +1,20 @@
 import * as vscode from 'vscode';
 import { NodeProvider } from "../nodeProvider";
-import { getUri } from "../utilities/util";
+import { Util } from "../utilities/util";
 
-export class NodeViewProvider implements vscode.WebviewViewProvider {
+export class NodeStatusViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "pyrsia.node";
 
   private nodeProvider;
   private _view?: vscode.WebviewView;
   private extensionUri: vscode.Uri;
-  private readonly onDidConnectListeners: Set<NodeViewListener> = new Set<NodeViewListener>();
+  private readonly onDidConnectListeners: Set<NodeStatusViewListener> = new Set<NodeStatusViewListener>();
 
   constructor(private readonly context: vscode.ExtensionContext) {
     this.nodeProvider = new NodeProvider();
 
     vscode.window.registerWebviewViewProvider(
-      NodeViewProvider.viewType,
+      NodeStatusViewProvider.viewType,
       this,
     );
 
@@ -25,7 +25,7 @@ export class NodeViewProvider implements vscode.WebviewViewProvider {
     return this._view as vscode.WebviewView;
   }
 
-  onDidConnect(listener: NodeViewListener): void {
+  onDidConnect(listener: NodeStatusViewListener): void {
 		this.onDidConnectListeners.add(listener);
 	}
 
@@ -41,7 +41,7 @@ export class NodeViewProvider implements vscode.WebviewViewProvider {
     view.webview.html = this.getWebviewContent(view.webview, this.extensionUri);
     this.setWebviewMessageListener(view);
 
-    view.onDidChangeVisibility(() :void => {
+    view.onDidChangeVisibility((): void => {
       this.updateView();
     });
 
@@ -50,7 +50,7 @@ export class NodeViewProvider implements vscode.WebviewViewProvider {
 
   private getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
     
-    const toolkitUri = getUri(webview, extensionUri, [
+    const toolkitUri = Util.getUri(webview, extensionUri, [
       "node_modules",
       "@vscode",
       "webview-ui-toolkit",
@@ -58,8 +58,8 @@ export class NodeViewProvider implements vscode.WebviewViewProvider {
       "toolkit.js",
     ]);
 
-    const mainUri = getUri(webview, extensionUri, ["src", "webview-ui", "main.js"]);
-    const stylesUri = getUri(webview, extensionUri, ["src", "webview-ui", "styles.css"]);
+    const mainUri = Util.getUri(webview, extensionUri, ["src", "webview-ui", "main.js"]);
+    const stylesUri = Util.getUri(webview, extensionUri, ["src", "webview-ui", "styles.css"]);
     const pyrsiaHostname = this.nodeProvider.getHostname();
 
     return /*html*/ `
@@ -145,6 +145,6 @@ export class NodeViewProvider implements vscode.WebviewViewProvider {
   }
 }
 
-export interface NodeViewListener {
+export interface NodeStatusViewListener {
     onDidConnect(): void;
 }

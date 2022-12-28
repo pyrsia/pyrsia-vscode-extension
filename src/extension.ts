@@ -1,13 +1,23 @@
 import * as vscode from 'vscode';
 import { NodeConfigView } from './webviews/NodeConfigView';
-import { NodeViewProvider } from './webviews/NodeViewProvider';
+import { NodeStatusViewProvider } from './webviews/NodeStatusView';
+import { NodeIntegrationsView } from './webviews/NodeIntegrationsView';
+import { Util } from './utilities/util';
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 
 	console.log('Pyrsia extension activated');
 
-	const nodeView = new NodeViewProvider(context);
+	// initialize the util
+	Util.init(context);
+
+	// Node status web view provider
+	const nodeView = new NodeStatusViewProvider(context);
+	// Node status config view
 	const nodeConfigView = new NodeConfigView(context);
+
+	// Node status config view
+	new NodeIntegrationsView(context);
 
 	//Notify the Node Config View when connected to node
 	nodeView.onDidConnect({
@@ -20,15 +30,17 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// });
 	
-	// let startNode = vscode.commands.registerCommand('pyrsia.isNodeHealthy', () => {
-	// 	nodeProvider.isNodeHealthy;
+	// const startNode = vscode.commands.registerCommand('pyrsia.startNode', (a) => {
+	// 	// nodeProvider.isNodeHealthy;
+	// 	console.log(a);
 	// });
 
-	// let stopNode = vscode.commands.registerCommand('pyrsia.stopNode', () => {
-	// 	nodeProvider.stop();
+	// const stopNode = vscode.commands.registerCommand('pyrsia.stopNode', () => {
+	// 	//nodeProvider.stop();
+	// 	console.log("something");
 	// });
 
-	// context.subscriptions.push(startNode, stopNode);
+	//context.subscriptions.push(startNode, stopNode);
 }
 
 // export function deactivate() {}

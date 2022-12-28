@@ -27,16 +27,16 @@
       "package-explorer": [
         {
           "id": "pyrsia.node",
-          "name": "Node",
+          "name": "Node Status",
           "type": "webview"
         },
         {
           "id": "pyrsia.node-config",
-          "name": "Configuration"
+          "name": "Node Configuration"
         },
         {
-          "id": "pyrsia.integrations",
-          "name": "Integrations"
+          "id": "pyrsia.node-integrations",
+          "name": "Available Integrations"
         },
         {
           "id": "pyrsia.help",
@@ -44,20 +44,7 @@
         }
       ]
     },
-    "commands": [
-      {
-        "command": "pyrsia.startNode",
-        "title": "Start Pyrsia Node"
-      },
-      {
-        "command": "pyrsia.stopNode",
-        "title": "Stop Pyrsia Node"
-      },
-      {
-        "command": "pyrsia.node-config.tree.refresh",
-        "title": "Refresh"
-      }
-    ]
+    "commands": []
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -82,6 +69,8 @@
   },
   "dependencies": {
     "@vscode/webview-ui-toolkit": "^1.2.0",
-    "axios": "^1.2.1"
+    "axios": "^1.2.1",
+    "fs": "^0.0.1-security",
+    "os": "^0.1.2"
   }
 }
