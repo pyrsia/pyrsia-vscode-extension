@@ -1,8 +1,12 @@
 {
   "name": "pyrsia-integration",
-  "displayName": "Pyrsia Integration",
+  "displayName": "Pyrsia",
   "description": "Pyrsia Integration for VS Code",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pyrsia/pyrsia-vscode-extension"
+  },
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -26,13 +30,8 @@
     "views": {
       "package-explorer": [
         {
-          "id": "pyrsia.node",
-          "name": "Node Status",
-          "type": "webview"
-        },
-        {
           "id": "pyrsia.node-config",
-          "name": "Node Configuration"
+          "name": "Node Status"
         },
         {
           "id": "pyrsia.node-integrations",

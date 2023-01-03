@@ -2,27 +2,27 @@ import * as vscode from 'vscode';
 
 export interface Integration {
 
-    getTreeItem(treeItemId: string): IntegrationTreeItem | undefined;
+	getTreeItem(treeItemId: string): IntegrationTreeItem | undefined;
 
-    getTreeItemChildren(): string[];
+	getTreeItemChildren(): string[];
 
-    getId(): string;
+	getId(): string;
 
-    update(): void;
+	update(): void;
 
 }
 
 export abstract class IntegrationTreeItem extends vscode.TreeItem {
 
-    constructor(
+	constructor(
 		public label: string,
-		public readonly id: string,
+		public readonly id: string
 	) {
 		super(label, vscode.TreeItemCollapsibleState.None);
 		this.tooltip = this.label;
 	}
 
-    abstract update(): void;
+	abstract update(): void;
 
 }
 

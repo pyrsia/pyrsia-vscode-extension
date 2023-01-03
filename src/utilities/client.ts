@@ -1,69 +1,69 @@
 import axios from "axios";
 import { Util } from "./util";
 
-// TODO This should be obtained from the pyrsia node config
-export function getNodeUrl(): string {
-  return `http://${Util.getNodeConfig().hostname}:${getNodePort()}`;
-}
+export const getNodeUrl = ( ): string => {
+	let nodeUrl = Util.getNodeConfig().host;
 
-// TODO This should be obtained from the pyrsia node config
-function getNodePort(): string {
-  return Util.getNodeConfig().port;
-}
+	if (!nodeUrl.toLowerCase().startsWith("http")) {
+		nodeUrl = `http://${nodeUrl}`;
+	}
+
+	return nodeUrl;
+};
 
 type PingResponse = {
-  data: string[];
+	data: string[];
 };
 
 type StatusResponse = {
-  data: string[];
+	data: string[];
 };
 
-export async function isNodeHealthy(): Promise<boolean> {
-  console.log('Check node health');
-  const nodeUrl = `${getNodeUrl()}/v2`;
-  let status;
-  try {
-    ({ status } = await axios.get<PingResponse>(
-      nodeUrl,
-      {
-        headers: {
-          accept: 'application/json',
-        },
-      },
-    ));
-  } catch (e) {
-    console.error(e);
-  }
+export const isNodeHealthy = async (): Promise<boolean> => {
+	console.log('Check node health');
+	const nodeUrl = `${getNodeUrl()}/v2`;
+	let status;
+	try {
+		({ status } = await axios.get<PingResponse>(
+			nodeUrl,
+			{
+				headers: {
+					accept: 'application/json'
+				}
+			}
+		));
+	} catch (error) {
+		console.error(error);
+	}
 
-  return status === 200;
-}
+	return status === 200;
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getStatus(): Promise<any> {
-  console.log('Get node status');
-  const nodeUrl = `${getNodeUrl()}/status`;
-  let data;
+export const getStatus = async (): Promise<any> => {
+	console.log('Get node status');
+	const nodeUrl = `${getNodeUrl()}/status`;
+	let data;
 
-  try {
-    ({ data } = await axios.get<StatusResponse>(
-      nodeUrl,
-      {
-        headers: {
-          accept: 'application/json',
-        },
-      },
-    ));
-  } catch (e) {
-    console.error(e);
-  }
+	try {
+		({ data } = await axios.get<StatusResponse>(
+			nodeUrl,
+			{
+				headers: {
+					accept: 'application/json'
+				}
+			}
+		));
+	} catch (error) {
+		console.error(error);
+	}
 
-  return data;
-}
+	return data;
+};
 
-export async function getPeers(): Promise<string> {
-  console.log('Get node peers');
-  const data = await getStatus();
- 
-  return data ? data.peers_count : "0";
-}
+export const getPeers = async (): Promise<string> => {
+	console.log('Get node peers');
+	const data = await getStatus();
+
+	return data ? data.peers_count : "0";
+};

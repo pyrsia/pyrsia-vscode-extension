@@ -3,225 +3,146 @@
 import * as vscode from 'vscode';
 import { Util } from '../utilities/util';
 import * as client from '../utilities/client';
+import { HelpUtil } from './HelpView';
 
 // TODO With branches
 // enum NodeConfigProperty {
-// 	Hostname = "hostname", // NO I18
-// 	Port = "port", // NO I18
-// 	HostnameValue = "hostnamevalue", // NO I18
-// 	PortValue = "portvalue", // NO I18
-// 	Peers = "peers", // NO I18
-// 	PeersValue = "peersvalue", // NO I18
+// 	Hostname = "hostname",  // NOI18
+// 	Port = "port",  // NOI18
+// 	HostnameValue = "hostnamevalue",  // NOI18
+// 	PortValue = "portvalue",  // NOI18
+// 	Peers = "peers",  // NOI18
+// 	PeersValue = "peersvalue",  // NOI18
 // }
 
 // TODO Without branches
 enum NodeConfigProperty {
-	Hostname = "hostname", // NO I18
-	Port = "port", // NO I18
-	// HostnameValue = "hostnamevalue", // NO I18
-	// PortValue = "portvalue", // NO I18
-	Peers = "peers", // NO I18
-	// PeersValue = "peersvalue", // NO I18
+	Status = "status",
+	// Hostname = "hostname", // NOI18
+	// Port = "port", // NOI18
+	// HostnameValue = "hostnamevalue", // NOI18
+	// PortValue = "portvalue", // NOI18
+	Peers = "peers", // NOI18
+	Error1 = "error1",
+	Error2 = "error2",
+	// PeersValue = "peersvalue", // NOI18
 }
 
 export class NodeConfigView {
-	private static readonly viewType: string = "pyrsia.node-config"; // NO I18
+	public static readonly configNodeCommandId = "pyrsia.configurenode";
+
+	private static readonly viewType: string = "pyrsia.node-config"; // NOI18
 	private readonly treeViewProvider: NodeConfigTreeProvider;
+	private readonly view;
 
 	constructor(context: vscode.ExtensionContext) {
 		this.treeViewProvider = new NodeConfigTreeProvider();
-		const view = vscode.window.createTreeView(NodeConfigView.viewType, { treeDataProvider: this.treeViewProvider, showCollapseAll: true });
+		this.view = vscode.window.createTreeView(
+			NodeConfigView.viewType,
+			{ showCollapseAll: true, treeDataProvider: this.treeViewProvider }
+		);
 		vscode.window.registerTreeDataProvider(NodeConfigView.viewType, this.treeViewProvider);
 
-		context.subscriptions.push(view);
+		context.subscriptions.push(this.view);
 
 		vscode.commands.registerCommand('pyrsia.node-config.tree.refresh', () => {
 			this.treeViewProvider.update();
 		});
 
-		view.onDidChangeVisibility(() => {
+		this.view.onDidChangeVisibility(() => {
 			this.treeViewProvider.update();
 		});
+
+		// docker open and update configuration editor command for the docker integration
+		const configureNodeCommand = vscode.commands.registerCommand(
+			NodeConfigView.configNodeCommandId,
+			async () => {
+				const options: vscode.InputBoxOptions = {
+					prompt: "Update the Pyrsia node address (e.g. localhost:7888)",
+					validateInput(value) {
+						let errorMessage: string | undefined;
+						console.info(`Node configuration input: ${value}`);
+						if (!value.toLocaleLowerCase().startsWith("http")) {
+							value = `http://${value}`;
+						}
+						try {
+							new URL(value);
+						} catch (error) {
+							errorMessage =
+								"Incorrect Pyrsia node address, please provide a correct address (e.g localhost:7888)";
+						}
+
+						return errorMessage;
+					},
+					value: Util.getNodeConfig().host
+				};
+
+				// show the input box so user can provide a new node address
+				const newNodeAddress: string | undefined = await vscode.window.showInputBox(options);
+				Util.getNodeConfig().url = newNodeAddress;
+
+				// update the UI
+				this.update();
+			}
+		);
+
+		context.subscriptions.push(configureNodeCommand);
+
+		// trigger data and UI updates for the first time
+		setTimeout(() => {
+			this.update();
+		}, 1000);
+
+		// update the UI every minute
+		setInterval(() => {
+			this.update();
+		}, 60000);
 	}
 
 	public update(): void {
 		this.treeViewProvider.update();
+		client.isNodeHealthy().then((healthy) => {
+			healthy ? this.view.title = "NODE STATUS  🟩" : this.view.title = "NODE STATUS  🟥";
+		});
 	}
 }
-
-
-// TODO This is the tree provider which returns branches
-// class NodeConfigTreeProvider implements vscode.TreeDataProvider<string> {
-
-// 	private _onDidChangeTreeData: vscode.EventEmitter<string | undefined | null | void> = new vscode.EventEmitter<string | undefined | null | void>();
-// 	readonly onDidChangeTreeData: vscode.Event<string | undefined | null | void> = this._onDidChangeTreeData.event;
-
-// 	private treeItems: Map<string, NodeTreeItem> = new Map<string, NodeTreeItem>();
-
-// 	async update() {
-// 		for (const nodeProperty in NodeConfigProperty) { // TODO Why nodeProperty is 'string' type? Investigate
-// 			const treeItem = this.treeItems.get(nodeProperty.toLocaleLowerCase());
-// 			if (treeItem) {
-// 				await treeItem.update();
-// 			}
-// 		}
-
-// 		this._onDidChangeTreeData.fire();
-// 	}
-
-// 	getTreeItem(id: string): vscode.TreeItem | Thenable<vscode.TreeItem> {
-// 		const treeItem = this.treeItems.get(id);
-// 		if (!treeItem) {
-// 			throw new Error(`Tree item ${id} doesn't exist.`);
-// 		}
-
-// 		return treeItem;
-// 	}
-
-// 	getChildren(parentId?: string | undefined): vscode.ProviderResult<string[]> {
-// 		let childrenArray: string[] = [];
-// 		if (!parentId) { // Create all tree Items for the tree
-// 			for (const nodeProperty in NodeConfigProperty) { // TODO Why nodeProperty is 'string' type? Investigate
-// 				const treeItem = this.treeItems.get(nodeProperty.toLowerCase());
-// 				if (!treeItem) {
-// 					const enumType = NodeConfigProperty[nodeProperty as keyof typeof NodeConfigProperty]; // TODO Why I have to do this conversion in TS? Shouldn't 'nodeProperty' be the enum type?
-// 					this.treeItems.set(nodeProperty.toLocaleLowerCase(), NodeTreeItem.create(enumType)); // TODO Why I have to do this conversion in TS? Shouldn't 'nodeProperty' be the enum type?
-// 				}
-// 			}
-// 			childrenArray = [... this.treeItems].map(([, value]) => {
-// 				return value.isRoot() ? value.id : "";
-// 			}).filter(value => value !== "");
-// 		} else { // not tree root then get the particular id for the parentId
-// 			const childId = NodeTreeItem.getChildrenId(parentId);
-// 			const treeItem: NodeTreeItem = this.treeItems.get(childId) as NodeTreeItem;
-// 			childrenArray = [treeItem.id];
-// 		}
-
-// 		return childrenArray;
-// 	}
-// }
-
-// class NodeTreeItem extends vscode.TreeItem {
-
-// 	constructor(
-// 		public label: string,
-// 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-// 		public readonly id: string,
-// 		public readonly root: boolean,
-// 		private readonly listener: NodeConfigListener,
-// 	) {
-// 		super(label, collapsibleState);
-// 		this.tooltip = this.label;
-// 	}
-
-// 	static create(nodeProperty: NodeConfigProperty): NodeTreeItem {
-// 		const property = this.properties[nodeProperty];
-// 		const collapsibleState = property.root ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None;
-// 		return new NodeTreeItem(
-// 			property.name,
-// 			collapsibleState,
-// 			property.id,
-// 			property.root,
-// 			property.listener,
-// 		);
-// 	}
-
-// 	async update() {
-// 		await this.listener.onUpdate(this);
-// 	}
-
-// 	isRoot(): boolean {
-// 		return this.root;
-// 	}
-
-// 	static getChildrenId(parentId: string) {
-// 		return `${parentId}value`;
-// 	}
-
-// 	private static readonly properties = {
-// 		[NodeConfigProperty.Hostname.toLowerCase()]: {
-// 			name: "Hostname",
-// 			id: "hostname", // NO I18
-// 			root: true,
-// 			listener: {
-// 				onUpdate: async () => {
-// 					console.log(`Nothing to update - ${this.name}`);
-// 				}
-// 			},
-// 		}, [NodeConfigProperty.HostnameValue.toLowerCase()]: {
-// 			name: "Getting node hostname...",
-// 			id: "hostnamevalue", // NO I18
-// 			root: false,
-// 			listener: {
-// 				onUpdate: async (treeItem: NodeTreeItem) => {
-// 					treeItem.label = util.getNodeConfig().hostname;
-// 				}
-// 			},
-// 		},
-// 		[NodeConfigProperty.Port.toLowerCase()]: {
-// 			name: "Port",
-// 			id: "port", // NO I18
-// 			root: true,
-// 			listener: {
-// 				onUpdate: async () => {
-// 					console.log(`Nothing to update - ${this.name}`);
-// 				}
-// 			},
-// 		},
-// 		[NodeConfigProperty.PortValue.toLowerCase()]: {
-// 			name: "Getting node port...",
-// 			id: "portvalue", // NO I18
-// 			root: false,
-// 			listener: {
-// 				onUpdate: async (treeItem: NodeTreeItem) => {
-// 					treeItem.label = util.getNodeConfig().port;
-// 				}
-// 			},
-// 		},
-// 		[NodeConfigProperty.Peers.toLowerCase()]: {
-// 			name: "Peers Count",
-// 			id: "peers", // NO I18
-// 			root: true,
-// 			listener: {
-// 				onUpdate: async () => {
-// 					console.log(`Nothing to update - ${this.name}`);
-// 				}
-// 			},
-// 		},
-// 		[NodeConfigProperty.PeersValue.toLowerCase()]: {
-// 			name: "Getting node peers...",
-// 			id: "peersvalue", // NO I18
-// 			root: false,
-// 			listener: {
-// 				onUpdate: async (treeItem: NodeTreeItem) => {
-// 					const peers = await client.getPeers();
-// 					treeItem.label = peers.toString();
-// 					treeItem.tooltip = peers.toString();
-// 					console.log(`Updating - ${this.name}`);
-// 				}
-// 			},
-// 		},
-// 	};
-// }
-
 
 // TODO This is flat tree (no branches)
 class NodeConfigTreeProvider implements vscode.TreeDataProvider<string> {
 
-	private _onDidChangeTreeData: vscode.EventEmitter<string | undefined | null | void> = new vscode.EventEmitter<string | undefined | null | void>();
+	private _onDidChangeTreeData: vscode.EventEmitter<string | undefined | null | void> =
+		new vscode.EventEmitter<string | undefined | null | void>();
+
+	// eslint-disable-next-line @typescript-eslint/member-ordering
 	readonly onDidChangeTreeData: vscode.Event<string | undefined | null | void> = this._onDidChangeTreeData.event;
 
-	private treeItems: Map<string, NodeTreeItem> = new Map<string, NodeTreeItem>();
+	private readonly treeItems: Map<string, NodeTreeItem>;
 
-	async update() {
+	constructor() {
+		this.treeItems = new Map<string, NodeTreeItem>();
+		for (const nodeProperty in NodeConfigProperty) { // TODO Why nodeProperty is 'string' type? Investigate
+			const treeItem = this.treeItems.get(nodeProperty.toLowerCase());
+			if (!treeItem) {
+				// TODO Why I have to do this conversion in TS? Shouldn't 'nodeProperty' be the enum type?
+				const enumType = NodeConfigProperty[nodeProperty as keyof typeof NodeConfigProperty];
+				// TODO Why I have to do this conversion in TS? Shouldn't 'nodeProperty' be the enum type?
+				this.treeItems.set(nodeProperty.toLocaleLowerCase(), NodeTreeItem.create(enumType));
+			}
+		}
+	}
+
+	update() {
 		for (const nodeProperty in NodeConfigProperty) { // TODO Why nodeProperty is 'string' type? Investigate
 			const treeItem = this.treeItems.get(nodeProperty.toLocaleLowerCase());
 			if (treeItem) {
-				await treeItem.update();
+				treeItem.update();
 			}
 		}
 
-		this._onDidChangeTreeData.fire();
+		// refresh the tree
+		setTimeout(() => {
+			this._onDidChangeTreeData.fire();
+		}, 1000);
 	}
 
 	getTreeItem(id: string): vscode.TreeItem | Thenable<vscode.TreeItem> {
@@ -236,13 +157,6 @@ class NodeConfigTreeProvider implements vscode.TreeDataProvider<string> {
 	getChildren(parentId?: string | undefined): vscode.ProviderResult<string[]> {
 		let children: string[] = [];
 		if (!parentId) { // Create all tree Items for the tree
-			for (const nodeProperty in NodeConfigProperty) { // TODO Why nodeProperty is 'string' type? Investigate
-				const treeItem = this.treeItems.get(nodeProperty.toLowerCase());
-				if (!treeItem) {
-					const enumType = NodeConfigProperty[nodeProperty as keyof typeof NodeConfigProperty]; // TODO Why I have to do this conversion in TS? Shouldn't 'nodeProperty' be the enum type?
-					this.treeItems.set(nodeProperty.toLocaleLowerCase(), NodeTreeItem.create(enumType)); // TODO Why I have to do this conversion in TS? Shouldn't 'nodeProperty' be the enum type?
-				}
-			}
 			children = [... this.treeItems].map(([, value]) => {
 				return value.isRoot() ? value.id : "";
 			}).filter(value => value !== "");
@@ -258,13 +172,93 @@ class NodeConfigTreeProvider implements vscode.TreeDataProvider<string> {
 
 class NodeTreeItem extends vscode.TreeItem {
 
+	// reusable icons
+	private static readonly emptyIcon = new vscode.ThemeIcon("non-icon");
+	private static readonly rightArrowIcon = new vscode.ThemeIcon("arrow-right");
+	private static readonly cloudIcon = new vscode.ThemeIcon("cloud");
+	private static readonly brokenConnectionIcon = new vscode.ThemeIcon("alert");
+	private static readonly peersCountIcon = new vscode.ThemeIcon("extensions-install-count");
+	private static readonly properties = {
+		[NodeConfigProperty.Status.toLowerCase()]: {
+			iconPath: NodeTreeItem.cloudIcon,
+			id: "status", // NOI18
+			listener: {
+				onUpdate: async (treeItem: NodeTreeItem) => {
+					const healthy: boolean = await client.isNodeHealthy();
+					const { host } = Util.getNodeConfig();
+					const status: string = healthy ? `Connected to '${host}'` : `Failed connecting to '${host}'`;
+					treeItem.label = status;
+					treeItem.iconPath = healthy ? NodeTreeItem.cloudIcon : NodeTreeItem.brokenConnectionIcon;
+					treeItem.command = { command: NodeConfigView.configNodeCommandId, title: "Configure Pyrsia Node" };
+				}
+			},
+			name: "Status",
+			root: true
+		},
+		[NodeConfigProperty.Peers.toLowerCase()]: {
+			iconPath: NodeTreeItem.peersCountIcon,
+			id: "peers", // NOI18
+			listener: {
+				onUpdate: async (treeItem: NodeTreeItem) => {
+					const health = await client.isNodeHealthy();
+					if (health) {
+						const peers = await client.getPeers();
+						const { name } = NodeTreeItem.properties[NodeConfigProperty.Peers.toLowerCase()];
+						treeItem.label = `${name}: ${peers.toString()}`;
+						treeItem.iconPath = NodeTreeItem.peersCountIcon;
+					} else { // don't show the item content 
+						treeItem.label = "";
+						treeItem.iconPath = NodeTreeItem.emptyIcon;
+					}
+				}
+			},
+			name: "Node peers",
+			root: true
+		},
+		[NodeConfigProperty.Error1.toLowerCase()]: {
+			iconPath: NodeTreeItem.emptyIcon,
+			id: "error1", // NOI18
+			listener: {
+				onUpdate: async (treeItem: NodeTreeItem) => {
+					const healthy: boolean = await client.isNodeHealthy();
+					treeItem.label = healthy ? "" : "👋 Read how to install and configure Pyrsia";
+					const iconPath = healthy ? NodeTreeItem.emptyIcon : NodeTreeItem.rightArrowIcon;
+					treeItem.iconPath = iconPath;
+					treeItem.command = healthy ? undefined : {
+						arguments: [HelpUtil.quickStartUrl],
+						command: HelpUtil.helpCommandId,
+						title: "Open Pyrsia Help"
+					};
+				}
+			},
+			name: "",
+			root: true
+		},
+		[NodeConfigProperty.Error2.toLowerCase()]: {
+			iconPath: NodeTreeItem.emptyIcon,
+			id: "error2", // NOI18
+			listener: {
+				onUpdate: async (treeItem: NodeTreeItem) => {
+					const healthy: boolean = await client.isNodeHealthy();
+					treeItem.label = healthy ? "" : "👋 Update Pyrsia node configuration";
+					treeItem.command = healthy ? undefined : {
+						command: NodeConfigView.configNodeCommandId,
+						title: "Configure Pyrsia Node"
+					};
+				}
+			},
+			name: "",
+			root: true
+		}
+	};
+
 	constructor(
 		public label: string,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
 		public readonly id: string,
 		public readonly root: boolean,
 		private readonly listener: NodeConfigListener,
-		public readonly iconPath: vscode.ThemeIcon,
+		public iconPath: vscode.ThemeIcon
 	) {
 		super(label, collapsibleState);
 		this.tooltip = this.label;
@@ -274,70 +268,27 @@ class NodeTreeItem extends vscode.TreeItem {
 		const property = this.properties[nodeProperty];
 		const collapsibleState = vscode.TreeItemCollapsibleState.None;
 		return new NodeTreeItem(
-			property.name,
+			"Connecting to Pyrsia...",
 			collapsibleState,
 			property.id,
 			property.root,
 			property.listener,
-			property.iconPath,
+			property.iconPath
 		);
-	}
-
-	async update() {
-		await this.listener.onUpdate(this);
-	}
-
-	isRoot(): boolean {
-		return this.root;
 	}
 
 	static getChildrenId(parentId: string) {
 		return `${parentId}value`;
 	}
 
-	private static readonly properties = {
-		[NodeConfigProperty.Hostname.toLowerCase()]: {
-			name: "Node",
-			id: "hostname", // NO I18
-			root: true,
-			listener: {
-				onUpdate: async (treeItem: NodeTreeItem) => {
-					const name = NodeTreeItem.properties[NodeConfigProperty.Hostname.toLowerCase()].name;
-					treeItem.label = `${name}: ${Util.getNodeConfig().hostname}`;
-				}
-			},
-			iconPath: new vscode.ThemeIcon("cloud"),
-		},
-		[NodeConfigProperty.Port.toLowerCase()]: {
-			name: "Port",
-			id: "port", // NO I18
-			root: true,
-			listener: {
-				onUpdate: async (treeItem: NodeTreeItem) => {
-					const name = NodeTreeItem.properties[NodeConfigProperty.Port.toLowerCase()].name;
-					treeItem.label = `${name}: ${Util.getNodeConfig().port}`;
-				}
-			},
-			iconPath: new vscode.ThemeIcon("ports-view-icon"),
-		},
-		[NodeConfigProperty.Peers.toLowerCase()]: {
-			name: "Peers Count",
-			id: "peers", // NO I18
-			root: true,
-			listener: {
-				onUpdate: async (treeItem: NodeTreeItem) => {
-					const peers = await client.getPeers();
-					const name = NodeTreeItem.properties[NodeConfigProperty.Peers.toLowerCase()].name;
-					treeItem.label = `${name}: ${peers.toString()}`;
-					treeItem.tooltip = `${name}: ${peers.toString()}`;
-					console.log(`Updating - ${name}`);
-				}
-			},
-			iconPath: new vscode.ThemeIcon("extensions-install-count"),
-		},
-	};
-}
+	update() {
+		this.listener.onUpdate(this);
+	}
 
+	isRoot(): boolean {
+		return this.root;
+	}
+}
 
 interface NodeConfigListener {
 	onUpdate(treeItem: NodeTreeItem): void;

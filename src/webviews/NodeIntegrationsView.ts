@@ -3,34 +3,33 @@
 import * as vscode from 'vscode';
 import { Integration, IntegrationTreeItem } from '../integrations/Integration';
 import { Docker } from '../integrations/Docker';
-import path = require('path');
-import { Util } from '../utilities/util';
 
 export class NodeIntegrationsView {
-	private static readonly viewType: string = "pyrsia.node-integrations"; // NO I18
+	private static readonly viewType: string = "pyrsia.node-integrations"; // NOI18
 	private readonly treeViewProvider: NodeIntegrationsTreeProvider;
 
 	private readonly _view?: vscode.TreeView<string>;
 
 	constructor(context: vscode.ExtensionContext) {
 
-		const test = path.join(Util.getResourcePath(),"docker_small.svg");
-		console.log(test);
 		this.treeViewProvider = new NodeIntegrationsTreeProvider();
-		
+
 		// add and update the Docker integration
 		this.treeViewProvider.addIntegration(new Docker(context));
-		
-		this._view = vscode.window.createTreeView(NodeIntegrationsView.viewType, { treeDataProvider: this.treeViewProvider, showCollapseAll: true });
 
-	
+		this._view = vscode.window.createTreeView(
+			NodeIntegrationsView.viewType,
+			{ showCollapseAll: true, treeDataProvider: this.treeViewProvider }
+		);
+
+
 		this.treeViewProvider.update();
 
-		vscode.commands.registerCommand('pyrsia.node-integrations.tree.refresh', async () => {
+		vscode.commands.registerCommand('pyrsia.node-integrations.tree.refresh', () => {
 			this.treeViewProvider.update();
 		});
 
-		this._view.onDidChangeVisibility(async () => {
+		this._view.onDidChangeVisibility(() => {
 			this.treeViewProvider.update();
 		});
 
@@ -46,10 +45,10 @@ export class NodeIntegrationsView {
 		//vscode.window.registerTreeDataProvider(NodeIntegrationsView.viewType, this.treeViewProvider);
 
 		context.subscriptions.push(this._view);
-		
+
 	}
 
-	async addIntegration(integration: Integration) : Promise<void> {
+	addIntegration(integration: Integration): void {
 		this.treeViewProvider.addIntegration(integration);
 	}
 
@@ -63,9 +62,11 @@ export class NodeIntegrationsView {
 class NodeIntegrationsTreeProvider implements vscode.TreeDataProvider<string> {
 
 	// on change tree data
-	private _onDidChangeTreeData: vscode.EventEmitter<string | undefined | null | void> = new vscode.EventEmitter<string | undefined | null | void>();
+	private _onDidChangeTreeData: vscode.EventEmitter<string | undefined | null | void> =
+		new vscode.EventEmitter<string | undefined | null | void>();
+	// eslint-disable-next-line @typescript-eslint/member-ordering
 	readonly onDidChangeTreeData: vscode.Event<string | undefined | null | void> = this._onDidChangeTreeData.event;
-	
+
 	// on visibility change
 	// private _onDidChangeVisibility: vscode.EventEmitter<string | undefined | null | void> = new vscode.EventEmitter<string | undefined | null | void>();
 	// readonly onDidChangeVisibility: vscode.Event<string | undefined | null | void> = this._onDidChangeVisibility.event;
@@ -100,17 +101,20 @@ class NodeIntegrationsTreeProvider implements vscode.TreeDataProvider<string> {
 		return children;
 	}
 
-	async update(): Promise<void> {
+	update(): void {
 		for (const integration of this.integrations) {
-			await integration.update();
+			integration.update();
 		}
 		this._onDidChangeTreeData.fire(undefined);
 	}
-	
-	resolveTreeItem?(item: vscode.TreeItem, element: string, token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
+
+	resolveTreeItem?(
+		item: vscode.TreeItem,
+		element: string,
+		token: vscode.CancellationToken
+	): vscode.ProviderResult<vscode.TreeItem> {
 		console.log(element);
 		console.log(token);
 		return item;
 	}
-
 }

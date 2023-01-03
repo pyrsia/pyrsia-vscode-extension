@@ -1,28 +1,27 @@
+
+import { URL } from "url";
+
 export class NodeConfig {
-	private static readonly defaultHostname = "localhost";
-	private static readonly defaultPort = "7888";
+	private static readonly defaultNodeUrl = new URL("localhost:7888");
+	private nodeUrl: URL;
 
-	private _hostname: string;
-	private _port: string;
-
-	constructor(hostname: string = NodeConfig.defaultHostname, port: string = NodeConfig.defaultPort) {
-		this._hostname = hostname;
-		this._port = port;
-	}
-	
-	get hostname(): string {
-		return this._hostname;
+	constructor(nodeUrl?: URL) {
+		this.nodeUrl = nodeUrl || NodeConfig.defaultNodeUrl;
 	}
 
-	set hostname(hostname: string) {
-		this._hostname = hostname;
+	public get host(): string {
+		return this.nodeUrl.href;
 	}
 
-	get port(): string {
-		return this._port;
+	public get url(): URL {
+		return this.nodeUrl;
 	}
 
-	set port(port: string) {
-		this._port = port;
+	public set url(nodeUrl: URL | string | undefined) {
+		if (typeof nodeUrl === "string" ) {
+			this.nodeUrl = new URL(nodeUrl);
+		} else {
+			this.nodeUrl = nodeUrl || NodeConfig.defaultNodeUrl;
+		}
 	}
 }
