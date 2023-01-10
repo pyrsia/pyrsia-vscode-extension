@@ -1,51 +1,52 @@
 // https://github.com/xojs/eslint-config-xo-typescript/issues/43
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
-import { Integration, IntegrationTreeItem } from '../integrations/Integration';
-import { Docker } from '../integrations/Docker';
+import { Integration, IntegrationTreeItem, Event } from '../integrations/api/Integration';
 
-export class NodeIntegrationsView {
+export class IntegrationsView {
+	private static readonly refreshIntegrationModelCommandId: string = "pyrsia.integrations.model.update";
+	private static readonly refreshIntegrationViewCommandId: string = "pyrsia.integrations.view.update";
 	private static readonly viewType: string = "pyrsia.node-integrations"; // NOI18
+	
 	private readonly treeViewProvider: NodeIntegrationsTreeProvider;
-
 	private readonly _view?: vscode.TreeView<string>;
 
 	constructor(context: vscode.ExtensionContext) {
 
 		this.treeViewProvider = new NodeIntegrationsTreeProvider();
 
-		// add and update the Docker integration
-		this.treeViewProvider.addIntegration(new Docker(context));
-
 		this._view = vscode.window.createTreeView(
-			NodeIntegrationsView.viewType,
+			IntegrationsView.viewType,
 			{ showCollapseAll: true, treeDataProvider: this.treeViewProvider }
 		);
 
-
 		this.treeViewProvider.update();
 
-		vscode.commands.registerCommand('pyrsia.node-integrations.tree.refresh', () => {
+		vscode.commands.registerCommand(IntegrationsView.refreshIntegrationModelCommandId, () => {
 			this.treeViewProvider.update();
+		});
+
+		vscode.commands.registerCommand(IntegrationsView.refreshIntegrationViewCommandId, () => {
+			this.treeViewProvider.refreshTreeView();
 		});
 
 		this._view.onDidChangeVisibility(() => {
 			this.treeViewProvider.update();
 		});
 
-		this._view.onDidChangeSelection((event) => {
-			console.log(event);
+		this._view.onDidChangeSelection(() => {
+			this.treeViewProvider.update();
 		});
 
-		// this.treeViewProvider.onDidChangeSelection((event) => {
-		// 	console.log(event);
-		// });
-
-
-		//vscode.window.registerTreeDataProvider(NodeIntegrationsView.viewType, this.treeViewProvider);
-
 		context.subscriptions.push(this._view);
+	}
 
+	static requestIntegrationsModelUpdate(): void {
+		vscode.commands.executeCommand(this.refreshIntegrationModelCommandId);
+	}
+
+	static requestIntegrationsViewUpdate(): void {
+		vscode.commands.executeCommand(this.refreshIntegrationViewCommandId);
 	}
 
 	addIntegration(integration: Integration): void {
@@ -95,7 +96,7 @@ class NodeIntegrationsTreeProvider implements vscode.TreeDataProvider<string> {
 		console.log(parentId);
 		let children: string[] = [];
 		for (const integration of this.integrations) {
-			children = children.concat(integration.getTreeItemChildren());
+			children = children.concat(integration.getTreeItemChildren(parentId));
 		}
 
 		return children;
@@ -103,9 +104,8 @@ class NodeIntegrationsTreeProvider implements vscode.TreeDataProvider<string> {
 
 	update(): void {
 		for (const integration of this.integrations) {
-			integration.update();
+			integration.update(Event.IntegrationModelUpdate);
 		}
-		this._onDidChangeTreeData.fire(undefined);
 	}
 
 	resolveTreeItem?(
@@ -116,5 +116,9 @@ class NodeIntegrationsTreeProvider implements vscode.TreeDataProvider<string> {
 		console.log(element);
 		console.log(token);
 		return item;
+	}
+
+	refreshTreeView(): void {
+		this._onDidChangeTreeData.fire(undefined);
 	}
 }

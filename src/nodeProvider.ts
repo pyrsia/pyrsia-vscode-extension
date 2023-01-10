@@ -1,5 +1,5 @@
-import * as cp from 'child_process';
-import * as client from './utilities/client';
+import * as cp from "child_process";
+import * as client from "./utilities/pyrsiaClient";
 
 export class NodeProvider {
 

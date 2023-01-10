@@ -15,7 +15,14 @@
             ],
             "preLaunchTask": "",
             "request": "launch",
-            "type": "extensionHost"
+            "type": "extensionHost",
+            "env": {
+                "VSCODE_DEBUG_MODE": "true"
+            }
         }
-    ]
+        
+    ],
+    "env": {
+        "DEBUG": "DUPA"
+    },
 }

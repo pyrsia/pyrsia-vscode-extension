@@ -1,39 +1,27 @@
 // https://github.com/xojs/eslint-config-xo-typescript/issues/43
 /* eslint-disable @typescript-eslint/naming-convention */
-import * as vscode from 'vscode';
-import { Util } from '../utilities/util';
-import * as client from '../utilities/client';
-import { HelpUtil } from './HelpView';
-
-// TODO With branches
-// enum NodeConfigProperty {
-// 	Hostname = "hostname",  // NOI18
-// 	Port = "port",  // NOI18
-// 	HostnameValue = "hostnamevalue",  // NOI18
-// 	PortValue = "portvalue",  // NOI18
-// 	Peers = "peers",  // NOI18
-// 	PeersValue = "peersvalue",  // NOI18
-// }
+import * as vscode from "vscode";
+import { Util } from "../utilities/util";
+import * as client from "../utilities/pyrsiaClient";
+import { HelpUtil } from "./HelpView";
+import { Event, Integration } from "../integrations/api/Integration";
+import { IntegrationsView } from "./IntegrationsView";
 
 // TODO Without branches
 enum NodeConfigProperty {
-	Status = "status",
-	// Hostname = "hostname", // NOI18
-	// Port = "port", // NOI18
-	// HostnameValue = "hostnamevalue", // NOI18
-	// PortValue = "portvalue", // NOI18
+	Status = "status", // NOI18
 	Peers = "peers", // NOI18
-	Error1 = "error1",
-	Error2 = "error2",
-	// PeersValue = "peersvalue", // NOI18
+	Error1 = "error1", // NOI18
+	Error2 = "error2", // NOI18
 }
 
 export class NodeConfigView {
-	public static readonly configNodeCommandId = "pyrsia.configurenode";
+	public static readonly configNodeCommandId = "pyrsia.configure-node";
 
 	private static readonly viewType: string = "pyrsia.node-config"; // NOI18
 	private readonly treeViewProvider: NodeConfigTreeProvider;
 	private readonly view;
+	private readonly integrations: Set<Integration> = new Set<Integration>();
 
 	constructor(context: vscode.ExtensionContext) {
 		this.treeViewProvider = new NodeConfigTreeProvider();
@@ -45,7 +33,7 @@ export class NodeConfigView {
 
 		context.subscriptions.push(this.view);
 
-		vscode.commands.registerCommand('pyrsia.node-config.tree.refresh', () => {
+		vscode.commands.registerCommand("pyrsia.node-config.tree.refresh", () => {
 			this.treeViewProvider.update();
 		});
 
@@ -83,6 +71,10 @@ export class NodeConfigView {
 
 				// update the UI
 				this.update();
+				// notify the integrations update the update
+				this.notifyNodeConfigUpdated();
+				IntegrationsView.requestIntegrationsModelUpdate();
+				IntegrationsView.requestIntegrationsViewUpdate();
 			}
 		);
 
@@ -104,6 +96,16 @@ export class NodeConfigView {
 		client.isNodeHealthy().then((healthy) => {
 			healthy ? this.view.title = "NODE STATUS  🟩" : this.view.title = "NODE STATUS  🟥";
 		});
+	}
+
+	addIntegration(integration: Integration): void {
+		this.integrations.add(integration);
+	}
+
+	private notifyNodeConfigUpdated() {
+		for (const integration of this.integrations) {
+			integration.update(Event.NodeConfigurationUpdate);
+		}
 	}
 }
 
@@ -186,7 +188,7 @@ class NodeTreeItem extends vscode.TreeItem {
 				onUpdate: async (treeItem: NodeTreeItem) => {
 					const healthy: boolean = await client.isNodeHealthy();
 					const { host } = Util.getNodeConfig();
-					const status: string = healthy ? `Connected to '${host}'` : `Failed connecting to '${host}'`;
+					const status: string = healthy ? `Connected to Pyrsia node '${host}'` : `Failed connecting to Pyrsia node: '${host}'`;
 					treeItem.label = status;
 					treeItem.iconPath = healthy ? NodeTreeItem.cloudIcon : NodeTreeItem.brokenConnectionIcon;
 					treeItem.command = { command: NodeConfigView.configNodeCommandId, title: "Configure Pyrsia Node" };

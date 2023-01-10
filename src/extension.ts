@@ -1,25 +1,29 @@
-import * as vscode from 'vscode';
-import { NodeConfigView } from './webviews/NodeConfigView';
-// import { NodeStatusViewProvider } from './webviews/NodeStatusView';
-import { NodeIntegrationsView } from './webviews/NodeIntegrationsView';
-import { Util } from './utilities/util';
-import { HelpView } from './webviews/HelpView';
+import * as vscode from "vscode";
+import { NodeConfigView } from "./webviews/NodeConfigView";
+// import { NodeStatusViewProvider } from "./webviews/NodeStatusView";
+import { IntegrationsView as IntegrationsView } from "./webviews/IntegrationsView";
+import { Util } from "./utilities/util";
+import { HelpView } from "./webviews/HelpView";
+import { Integration } from "./integrations/api/Integration";
+import { DockerIntegration } from "./integrations/impl/DockerIntegration";
 
 export const activate = (context: vscode.ExtensionContext) => {
-
-	console.log('Pyrsia extension activated');
-
 	// initialize the util
 	Util.init(context);
 
-	// Node status web view provider
+	// Node status web view provider, this is debug only view, disabled for now
 	//new NodeStatusViewProvider(context);
 
-	// Node status config view
-	new NodeConfigView(context);
+	// Create integrations
+	const dockerIntegration: Integration = new DockerIntegration(context);
 
 	// Node status config view
-	new NodeIntegrationsView(context);
+	const nodeConfigView = new NodeConfigView(context);
+	nodeConfigView.addIntegration(dockerIntegration);
+
+	// Node status config view
+	const integrationView = new IntegrationsView(context);
+	integrationView.addIntegration(dockerIntegration);
 
 	// Node status config view
 	new HelpView(context);
