@@ -1,11 +1,12 @@
 // https://github.com/xojs/eslint-config-xo-typescript/issues/43
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
-import { Integration, IntegrationTreeItem, Event } from '../integrations/api/Integration';
+import { Integration, IntegrationTreeItem, Event } from '../integrations/api/Integration'; // NOI18
 
 export class IntegrationsView {
-	private static readonly refreshIntegrationModelCommandId: string = "pyrsia.integrations.model.update";
-	private static readonly refreshIntegrationViewCommandId: string = "pyrsia.integrations.view.update";
+	private static readonly refreshIntegrationModelCommandId: string = "pyrsia.integrations.model.update"; // NOI18
+	private static readonly refreshIntegrationViewCommandId: string = "pyrsia.integrations.view.update"; // NOI18
+	private static readonly refreshIntegrationCommandId: string = "pyrsia.integrations.update"; // NOI18
 	private static readonly viewType: string = "pyrsia.node-integrations"; // NOI18
 	
 	private readonly treeViewProvider: NodeIntegrationsTreeProvider;
@@ -30,6 +31,11 @@ export class IntegrationsView {
 			this.treeViewProvider.refreshTreeView();
 		});
 
+		vscode.commands.registerCommand(IntegrationsView.refreshIntegrationCommandId, () => {
+			this.treeViewProvider.update();
+			this.treeViewProvider.refreshTreeView();
+		});
+
 		this._view.onDidChangeVisibility(() => {
 			this.treeViewProvider.update();
 		});
@@ -49,6 +55,10 @@ export class IntegrationsView {
 		vscode.commands.executeCommand(this.refreshIntegrationViewCommandId);
 	}
 
+	static requestIntegrationsUpdate(): void {
+		vscode.commands.executeCommand(this.refreshIntegrationCommandId);
+	}
+
 	addIntegration(integration: Integration): void {
 		this.treeViewProvider.addIntegration(integration);
 	}
@@ -61,7 +71,6 @@ export class IntegrationsView {
 }
 
 class NodeIntegrationsTreeProvider implements vscode.TreeDataProvider<string> {
-
 	// on change tree data
 	private _onDidChangeTreeData: vscode.EventEmitter<string | undefined | null | void> =
 		new vscode.EventEmitter<string | undefined | null | void>();

@@ -72,9 +72,22 @@
         "title": "Open Pyrsia Transparency Log",
         "shortTitle": "Open Pyrsia Transparency Log",
         "icon": "$(file-code)"
+      },
+      {
+        "command": "pyrsia.integrations.update",
+        "title": "Refresh",
+        "shortTitle": "Refresh",
+        "icon": "$(refresh)"
       }
     ],
     "menus": {
+      "view/title": [
+        {
+          "command": "pyrsia.integrations.update",
+          "when": "view == pyrsia.node-integrations",
+          "group": "navigation"
+        }
+      ],
       "view/item/context": [
           {
             "command": "pyrsia.replace-docker-images",

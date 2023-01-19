@@ -73,8 +73,7 @@ export class NodeConfigView {
 				this.update();
 				// notify the integrations update the update
 				this.notifyNodeConfigUpdated();
-				IntegrationsView.requestIntegrationsModelUpdate();
-				IntegrationsView.requestIntegrationsViewUpdate();
+				IntegrationsView.requestIntegrationsUpdate();
 			}
 		);
 

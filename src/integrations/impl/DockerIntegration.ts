@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/member-ordering */
 import * as os from "os";
 import * as fsUtils from "../../utilities/fsUtils";
 import { Event, Integration, IntegrationTreeItem } from "../api/Integration";
@@ -20,25 +21,22 @@ export class DockerIntegration implements Integration {
 	private static readonly requestBuildId: string = "pyrsia.request-docker-build";
 
 	// context values
-	// eslint-disable-next-line @typescript-eslint/member-ordering
-	static readonly imageNotPyrsia = `${DockerIntegration.integrationId}.not-pyrsia`;
-	// eslint-disable-next-line @typescript-eslint/member-ordering
-	static readonly imagePyrsia = `${DockerIntegration.integrationId}.is-pyrsia`;
+	static readonly imageNotPyrsiaContextValue = `${DockerIntegration.integrationId}.not-pyrsia`;
+	static readonly imagePyrsiaContextValue = `${DockerIntegration.integrationId}.is-pyrsia`;
+	static readonly imageUpdatingContextValue = `${DockerIntegration.integrationId}.updating`;
 
 	// tree item ids
-	// eslint-disable-next-line @typescript-eslint/member-ordering
-	static readonly configFileItemId: string = `${this.integrationId}.configfile`;
+	static readonly configFileItemIdPrefix: string = `${this.integrationId}.configfile`;
+	private static readonly imageItemIdPrefix: string = `${this.integrationId}.dockerimage`;
 	private static readonly configItemId: string = `${this.integrationId}.configs`;
 	private static readonly imagesItemId: string = `${this.integrationId}.images`;
-	private static readonly imageItemId: string = `${this.integrationId}.dockerimage`;
-
 	// docker config files search path
 	private static confMap: Map<string, string> = new Map<string, string>();
 	private static readonly registryMirrorsConfName = "registry-mirrors";
 	
 	// item names
 	private static readonly dockerTreeItemName = "Docker";
-	private static warningIconPath: vscode.ThemeIcon = new vscode.ThemeIcon("warning"); // NOI18
+	private static readonly warningIconPath: vscode.ThemeIcon = new vscode.ThemeIcon("warning"); // NOI18
 
 	private readonly treeItems: Map<string, IntegrationTreeItem> = new Map<string, IntegrationTreeItem>();
 	private readonly dockerIconPath: { light: string | vscode.Uri; dark: string | vscode.Uri; };
@@ -61,8 +59,8 @@ export class DockerIntegration implements Integration {
 		this.registerCommands(context);
 	}
 
-	private static getImageTreeId(imageName: string): string {
-		return `${DockerIntegration.imageItemId}.${imageName}`;
+	private static getTreeItemImageId(imageName: string): string {
+		return `${DockerIntegration.imageItemIdPrefix}.${imageName}`;
 	}
 
 	async replaceImagesWithPyrsia(): Promise<void> {
@@ -78,7 +76,7 @@ export class DockerIntegration implements Integration {
 			}
 			// only update the images which are available  in Pyrsia
 			const transImageLog: [] = await client.getDockerTransparencyLog(imageName);
-			await this.updateModel();
+			await this.updateModel(false);
 			if (transImageLog.length > 0) {
 				// remove the old images first
 				try {
@@ -110,20 +108,24 @@ export class DockerIntegration implements Integration {
 						dockerClient.pull(imageName, (err: string, stream: any) => {
 							console.log(err);
 							const onFinished = (error_: unknown, output: unknown) => {
-								console.info(`Error: ${error_}, ${output}`);
-								this.treeItems.delete(DockerIntegration.getImageTreeId(imageName));
-								IntegrationsView.requestIntegrationsModelUpdate();
-								IntegrationsView.requestIntegrationsViewUpdate();
+								if (error_) {
+									console.error(error_);
+								}
+								console.log(output);
+								this.treeItems.delete(DockerIntegration.getTreeItemImageId(imageName));
+								IntegrationsView.requestIntegrationsUpdate();
 							};
 
 							const onProgress = (event: unknown) => {
 								console.log(event);
-								const treeItem = this.treeItems.get(DockerIntegration.getImageTreeId(imageName));
+								const treeItem = this.treeItems.get(DockerIntegration.getTreeItemImageId(imageName));
 								if (treeItem) {
-									treeItem.label = `Replacing '${imageName}' with Pyrsia image.`;
+									treeItem.label = `Updating '${imageName}' with Pyrsia image.`;
 									treeItem.iconPath = DockerImageTreeItem.iconPathPullDocker;
+									treeItem.contextValue = DockerIntegration.imageUpdatingContextValue;
 								}
-								IntegrationsView.requestIntegrationsModelUpdate();
+								// let the model update know that the pulling is in progress which means some images might be not be present yet
+								this.updateModel(true);
 								IntegrationsView.requestIntegrationsViewUpdate();
 							};
 							dockerClient.modem.followProgress(stream, onFinished, onProgress);
@@ -131,8 +133,7 @@ export class DockerIntegration implements Integration {
 					});
 				} catch (err) {
 					Util.debugMessage(`Couldn't replace image: ${imageInfo.Labels}, error: ${err}`);
-					IntegrationsView.requestIntegrationsModelUpdate();
-					IntegrationsView.requestIntegrationsViewUpdate();
+					IntegrationsView.requestIntegrationsUpdate();
 				}
 			}
 		});
@@ -150,14 +151,14 @@ export class DockerIntegration implements Integration {
 				// eslint-disable-next-line no-case-declarations
 				const configItems = [... this.treeItems].map(([, value]) => {
 					return value.id;
-				}).filter(id => id?.includes(DockerIntegration.configFileItemId));
+				}).filter(id => id?.includes(DockerIntegration.configFileItemIdPrefix));
 				children = children.concat((configItems as string[]));
 				break;
 			case DockerIntegration.imagesItemId:
 				// eslint-disable-next-line no-case-declarations
 				const imageItems = [... this.treeItems].map(([, value]) => {
 					return value.id;
-				}).filter(id => id?.includes(DockerIntegration.imageItemId));
+				}).filter(id => id?.includes(DockerIntegration.imageItemIdPrefix));
 				children = children.concat((imageItems as string[]));
 				break;
 			default:
@@ -179,7 +180,7 @@ export class DockerIntegration implements Integration {
 	async update(event: Event): Promise<void> {
 		switch (event) {
 			case Event.IntegrationModelUpdate: {
-				await this.updateModel();
+				await this.updateModel(false);
 				break;
 			}
 			case Event.NodeConfigurationUpdate: {
@@ -191,13 +192,13 @@ export class DockerIntegration implements Integration {
 				break;
 			}
 			default:{
-				this.updateModel();
+				this.updateModel(false);
 			}
 		}
 		IntegrationsView.requestIntegrationsViewUpdate();
 	}
 
-	private async updateModel() {
+	private async updateModel(pullingInProgress: boolean) {
 		// check if the docker and node is up
 		let isDockerUp = true;
 		try {
@@ -227,7 +228,7 @@ export class DockerIntegration implements Integration {
 				}
 				fsUtils.findByName(confPath, fileName).then((confFilePath) => {
 					if (confFilePath) {
-						const id = `${DockerIntegration.configFileItemId}.${confFilePath}`;
+						const id = `${DockerIntegration.configFileItemIdPrefix}.${confFilePath}`;
 						const label = `${confFilePath}`;
 						this.treeItems.set(
 							id,
@@ -237,12 +238,13 @@ export class DockerIntegration implements Integration {
 						console.log(`No configuration for 'Docker' - ${path.join(confPath, fileName)}`);
 					}
 				});
-				IntegrationsView.requestIntegrationsViewUpdate();
 			}
 
-			// look for docker images
+			// get the local docker images
 			const dockerClient = Util.getDockerClient();
 			const images = await dockerClient.listImages();
+			const currentImages: string[] = [];
+
 			images.forEach(async (image) => {
 				const imageName = image.RepoTags?.join();
 				if (imageName?.startsWith("<none>")) {
@@ -252,11 +254,12 @@ export class DockerIntegration implements Integration {
 				if (!imageName) {
 					return;
 				}
-				const id = DockerIntegration.getImageTreeId(imageName);
+				const id = DockerIntegration.getTreeItemImageId(imageName);
 				const imageItem = new DockerImageTreeItem(
 					id,
 					imageName
 				);
+				currentImages.push(id);
 				// check if image exists in pyrsia
 				const transImageLog: [] = await client.getDockerTransparencyLog(imageName);
 				imageItem.update({ pyrsia: transImageLog.length > 0 });
@@ -264,6 +267,19 @@ export class DockerIntegration implements Integration {
 				// add item to the tree items map
 				this.treeItems.set(id, imageItem);
 			});
+
+			// remove deleted images
+			if (!pullingInProgress) {
+				for (const key of this.treeItems.keys()) {
+					// skip non image tree items
+					if (!key.startsWith(DockerIntegration.imageItemIdPrefix)) {
+						continue;
+					}
+					if (!currentImages.includes(key)) {
+						this.treeItems.delete(key);
+					}
+				}
+			}
 			IntegrationsView.requestIntegrationsViewUpdate();
 		}
 	}
@@ -475,7 +491,7 @@ class DockerConfigTreeItem extends IntegrationTreeItem {
 		};
 
 		this.iconPath = DockerConfigTreeItem.iconPath;
-		this.contextValue = DockerIntegration.configFileItemId;
+		this.contextValue = DockerIntegration.configFileItemIdPrefix;
 	}
 
 	update(): void {
@@ -518,6 +534,6 @@ class DockerImageTreeItem extends IntegrationTreeItem {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	update(context: any): void {
 		this.iconPath = context.pyrsia ? this.pyrsiaIconPath : DockerImageTreeItem.defaultIconPath;
-		this.contextValue = context.pyrsia ? DockerIntegration.imagePyrsia : DockerIntegration.imageNotPyrsia;
+		this.contextValue = context.pyrsia ? DockerIntegration.imagePyrsiaContextValue : DockerIntegration.imageNotPyrsiaContextValue;
 	}
 }
