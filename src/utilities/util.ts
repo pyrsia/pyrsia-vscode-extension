@@ -1,62 +1,175 @@
-import { Uri, Webview } from "vscode";
-import { NodeConfig } from "../model/NodeConfig";
 import path = require("path");
-import * as vscode from 'vscode';
 import * as DockerClient from "dockerode";
+import * as vscode from "vscode";
+import { NodeConfig } from "../api/NodeConfig";
+import { readdir } from "fs/promises";
 
+/**
+ * Utility static method (don't create instances)
+ */
 export class Util {
-
 	private static resourcePath: string;
-	// TODO Replace it with real, persistance storage
-	private static config: NodeConfig = new NodeConfig();
+	private static config: NodeConfig;
 	private static dockerClient: DockerClient;
 
-	static init(context: vscode.ExtensionContext): void {
-		Util.resourcePath = context.asAbsolutePath(path.join('resources'));
-	}
-
-	static getUri(webview: Webview, extensionUri: Uri, pathList: string[]) {
-		return webview.asWebviewUri(Uri.joinPath(extensionUri, ...pathList));
-	}
-
-	static getNodeConfig(): NodeConfig {
-		return this.config; // TODO Replace it with the configuration obtained from the ide cache/storage
-	}
-
-	static getResourcePath(): string {
-		return Util.resourcePath;
-	}
-
-	static getResourceImagePath(): string {
-		return path.join(Util.resourcePath, "images");
+	/**
+	 * It's called once to pass the init values.
+	 * @param context
+	 */
+	public static init(context: vscode.ExtensionContext): void {
+		if (this.config) {
+			throw new Error("Utils class is already initialized")
+		}
+		// set the resource path
+		Util.resourcePath = context.asAbsolutePath(path.join('resources')); // NOI18N
+		// load the configuration from the context (context is used to store the node configuration - e.g URL)
+		this.config = new NodeConfigImpl(context.workspaceState);
 	}
 
 	/**
-	 * Get Docker Client (singleton).
-	 * @returns {DockerClient} DockerClient
+	 * Get the node configuration.
+	 * @returns {NodeConfig} returns the node config
 	 */
-	static getDockerClient(): DockerClient {
+	public static getNodeConfig(): NodeConfig {
+		return Util.config;
+	}
+
+	/**
+	 * Returns the resource path.
+	 * @returns {string} resource path folder path
+	 */
+	public static getResourcePath(): string {
+		return Util.resourcePath;
+	}
+
+	/**
+	 * Returns the image resource path folder
+	 * @returns {string} image resource folder path
+	 */
+	public static getResourceImagePath(): string {
+		return path.join(Util.resourcePath, "images"); // NOI18N
+	}
+
+	/**
+	 * Returns docker client, at this point we only support '/var/run/docker.sock'.
+	 * @returns {DockerClient} docker client
+	 */
+	public static getDockerClient(): DockerClient {
 		if (!this.dockerClient) {
-			const dockerConfig: DockerClient.DockerOptions = { socketPath: '/var/run/docker.sock' }; //TODO Should be configurable.
+			//TODO The docker client should be configurable but for now we only support Docker Desktop.
+			const dockerConfig: DockerClient.DockerOptions = { socketPath: '/var/run/docker.sock' }; // NOI18N
 			this.dockerClient = new DockerClient(dockerConfig);
 		}
 
 		return this.dockerClient;
 	}
-
-	static isDebugMode() {
+	
+	/**
+	 * Checks if in the debug mode.
+	 * @returns {boolean} Boolean true if in the debug mode
+	 */
+	public static isDebugMode(): boolean {
 		return process.env.VSCODE_DEBUG_MODE === "true";
 	}
 
-	static debugMessage(message: string) {
+	/**
+	 * It shows an error message (IDE notification).
+	 * @param {string} message  error message
+	 * @returns {void}
+	 */
+	public static debugMessage(message: string): void {
 		if (this.isDebugMode()) {
 			vscode.window.showErrorMessage(message);
 		}
 		console.debug(message);
 	}
-
-	static sleep(milliseconds: number): Promise<void> {
+	
+	/**
+	 * Sleeps for the given amount of time.
+	 * @param {number} milliseconds sf
+	 * @returns {Promise<void>} Promise
+	 */
+	public static sleep(milliseconds: number): Promise<void> {
 		return new Promise((resolve) => setTimeout(resolve, milliseconds));
+	}
+
+	/**
+	 * Searches for a file in the given dir recursively.
+	 * @async
+	 * @param {string} dir path 
+	 * @param {string} fileName searched filename
+	 * @returns {string} file path | unknown
+	 */
+	public static async findFile(dir: string, fileName: string): Promise<string | undefined> {
+		const dirFileNames = await readdir(dir);
+		let matchedFile: string | undefined = undefined;
+		for (const dirFileName of dirFileNames) {
+			if (dirFileName === fileName) {
+				matchedFile = path.join(dir, dirFileName);
+				break;
+			}
+		}
+	
+		return matchedFile;
 	}
 }
 
+/**
+ * Private NodeConfig implementation. 
+ */
+class NodeConfigImpl implements NodeConfig {
+	// the node supported protocol
+	private static readonly protocol = "http"; // NOI18N
+	// default node URL
+	private static readonly defaultNodeUrl = new URL("localhost:7888"); // NOI18N
+	// the configuration ket, it uses to store configuration in context.workspaceState
+	private static readonly nodeUrlKey: string = "PYRSIA_NODE_URL_KEY"; // NOI18N
+	
+	private nodeUrl: URL;
+	private workspaceState;
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	constructor(workspaceState: any) {
+		this.workspaceState = workspaceState;
+		const nodeUrl = workspaceState.get(NodeConfigImpl.nodeUrlKey);
+		this.url = nodeUrl;
+	}
+	
+	get defaultUrl(): URL {
+		return NodeConfigImpl.defaultNodeUrl;
+	}
+
+	get hostWithProtocol(): string {
+		let host = this.nodeUrl.href;
+		if (!host.toLocaleLowerCase().startsWith(NodeConfigImpl.protocol)) {
+			host = `${NodeConfigImpl.protocol}://${host}`; 
+		}
+
+		return host;
+	}
+
+	get protocol(): string {
+		return NodeConfigImpl.protocol;
+	}
+
+	get host(): string {
+		return this.nodeUrl.href;
+	}
+
+	get url(): URL {
+		return this.nodeUrl;
+	}
+
+	set url(nodeUrl: URL | string | undefined) {
+		if (!nodeUrl) {
+			console.warn(`The node config wasn't updated because the provided URL is ${nodeUrl}`); // NOI18N
+			return;
+		}
+		if (typeof nodeUrl === "string" ) { // NOI18N
+			this.nodeUrl = new URL(nodeUrl);
+		} else {
+			this.nodeUrl = nodeUrl || NodeConfigImpl.defaultNodeUrl;
+		}
+		this.workspaceState.update(NodeConfigImpl.nodeUrlKey, this.nodeUrl);
+	}
+}

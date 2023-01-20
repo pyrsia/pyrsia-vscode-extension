@@ -1,57 +1,67 @@
 // https://github.com/xojs/eslint-config-xo-typescript/issues/43
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from "vscode";
-import { Util } from "../utilities/util";
+import { Util } from "../utilities/Util";
 import * as client from "../utilities/pyrsiaClient";
 import { HelpUtil } from "./HelpView";
-import { Event, Integration } from "../integrations/api/Integration";
+import { Event, Integration } from "../api/Integration";
 import { IntegrationsView } from "./IntegrationsView";
 
-// TODO Without branches
 enum NodeConfigProperty {
-	Status = "status", // NOI18
-	Peers = "peers", // NOI18
-	Error1 = "error1", // NOI18
-	Error2 = "error2", // NOI18
+	Status = "status", // NOI18N
+	Peers = "peers", // NOI18N
+	WarningConnection = "warningconnection", // NOI18N
+	WarningUpdateNode = "warningupdatenode", // NOI18N
 }
 
+/**
+ * Node Config view.
+ */
 export class NodeConfigView {
-	public static readonly configNodeCommandId = "pyrsia.configure-node";
+	// Ids (view, commands)
+	public static readonly configNodeCommandId = "pyrsia.node-config.update-url"; // NOI18N
+	private static readonly viewType: string = "pyrsia.node-config"; // NOI18N
+	private static readonly updateViewCommandId = "pyrsia.node-config.update-view"; // NOI18N
 
-	private static readonly viewType: string = "pyrsia.node-config"; // NOI18
 	private readonly treeViewProvider: NodeConfigTreeProvider;
 	private readonly view;
 	private readonly integrations: Set<Integration> = new Set<Integration>();
 
 	constructor(context: vscode.ExtensionContext) {
+		// create the view provider
 		this.treeViewProvider = new NodeConfigTreeProvider();
+		// create the tree view
 		this.view = vscode.window.createTreeView(
 			NodeConfigView.viewType,
 			{ showCollapseAll: true, treeDataProvider: this.treeViewProvider }
 		);
+		// register the view provider
 		vscode.window.registerTreeDataProvider(NodeConfigView.viewType, this.treeViewProvider);
-
+		// subscribe the node config view
 		context.subscriptions.push(this.view);
-
-		vscode.commands.registerCommand("pyrsia.node-config.tree.refresh", () => {
-			this.treeViewProvider.update();
+		// register the update view node (responsible for the view update on certain events)
+		vscode.commands.registerCommand(NodeConfigView.updateViewCommandId, () => {
+			this.update();
+			this.notifyNodeConfigUpdated();
 		});
-
+		// update the view (UI/model) on certain view events
 		this.view.onDidChangeVisibility(() => {
+			this.update();
 			this.treeViewProvider.update();
 		});
 
-		// docker open and update configuration editor command for the docker integration
+		// Add a command to update the Pyrsia node configuration (actually just URL)
 		const configureNodeCommand = vscode.commands.registerCommand(
 			NodeConfigView.configNodeCommandId,
 			async () => {
+				// the update node url input box
 				const options: vscode.InputBoxOptions = {
 					prompt: "Update the Pyrsia node address (e.g. localhost:7888)",
 					validateInput(value) {
 						let errorMessage: string | undefined;
 						console.info(`Node configuration input: ${value}`);
-						if (!value.toLocaleLowerCase().startsWith("http")) {
-							value = `http://${value}`;
+						if (!value.toLocaleLowerCase().startsWith(Util.getNodeConfig.prototype)) {
+							value = `${Util.getNodeConfig().protocol}://${value}`;
 						}
 						try {
 							new URL(value);
@@ -65,13 +75,12 @@ export class NodeConfigView {
 					value: Util.getNodeConfig().host
 				};
 
-				// show the input box so user can provide a new node address
+				// show the url input box so the user can provide a new node address
 				const newNodeAddress: string | undefined = await vscode.window.showInputBox(options);
 				Util.getNodeConfig().url = newNodeAddress;
-
-				// update the UI
+				// update the view and the dependencies
 				this.update();
-				// notify the integrations update the update
+				// notify the integrations about the change
 				this.notifyNodeConfigUpdated();
 				IntegrationsView.requestIntegrationsUpdate();
 			}
@@ -90,6 +99,7 @@ export class NodeConfigView {
 		}, 60000);
 	}
 
+	// update the view
 	public update(): void {
 		this.treeViewProvider.update();
 		client.isNodeHealthy().then((healthy) => {
@@ -97,31 +107,33 @@ export class NodeConfigView {
 		});
 	}
 
-	addIntegration(integration: Integration): void {
+	// adds integration (mostly so there is a way to notify them about the changes)
+	public addIntegration(integration: Integration): void {
 		this.integrations.add(integration);
 	}
 
+	// notify the integrations (e.g. Docker) about the changes
 	private notifyNodeConfigUpdated() {
 		for (const integration of this.integrations) {
 			integration.update(Event.NodeConfigurationUpdate);
+			integration.update(Event.IntegrationModelUpdate);
 		}
 	}
 }
 
-// TODO This is flat tree (no branches)
+// Tree data provider for the node config
 class NodeConfigTreeProvider implements vscode.TreeDataProvider<string> {
-
+	// update the tree on changes
 	private _onDidChangeTreeData: vscode.EventEmitter<string | undefined | null | void> =
 		new vscode.EventEmitter<string | undefined | null | void>();
-
 	// eslint-disable-next-line @typescript-eslint/member-ordering
 	readonly onDidChangeTreeData: vscode.Event<string | undefined | null | void> = this._onDidChangeTreeData.event;
-
+	// tree items
 	private readonly treeItems: Map<string, NodeTreeItem>;
 
 	constructor() {
 		this.treeItems = new Map<string, NodeTreeItem>();
-		for (const nodeProperty in NodeConfigProperty) { // TODO Why nodeProperty is 'string' type? Investigate
+		for (const nodeProperty in NodeConfigProperty) {
 			const treeItem = this.treeItems.get(nodeProperty.toLowerCase());
 			if (!treeItem) {
 				// TODO Why I have to do this conversion in TS? Shouldn't 'nodeProperty' be the enum type?
@@ -132,8 +144,9 @@ class NodeConfigTreeProvider implements vscode.TreeDataProvider<string> {
 		}
 	}
 
+	// update the tree data
 	update() {
-		for (const nodeProperty in NodeConfigProperty) { // TODO Why nodeProperty is 'string' type? Investigate
+		for (const nodeProperty in NodeConfigProperty) {
 			const treeItem = this.treeItems.get(nodeProperty.toLocaleLowerCase());
 			if (treeItem) {
 				treeItem.update();
@@ -157,11 +170,11 @@ class NodeConfigTreeProvider implements vscode.TreeDataProvider<string> {
 
 	getChildren(parentId?: string | undefined): vscode.ProviderResult<string[]> {
 		let children: string[] = [];
-		if (!parentId) { // Create all tree Items for the tree
+		if (!parentId) {
 			children = [... this.treeItems].map(([, value]) => {
 				return value.isRoot() ? value.id : "";
 			}).filter(value => value !== "");
-		} else { // not tree root then get the particular id for the parentId
+		} else {
 			const childId = NodeTreeItem.getChildrenId(parentId);
 			const treeItem: NodeTreeItem = this.treeItems.get(childId) as NodeTreeItem;
 			children = [treeItem.id];
@@ -171,18 +184,22 @@ class NodeConfigTreeProvider implements vscode.TreeDataProvider<string> {
 	}
 }
 
+/**
+ * Node config tree item
+ */
 class NodeTreeItem extends vscode.TreeItem {
-
-	// reusable icons
-	private static readonly emptyIcon = new vscode.ThemeIcon("non-icon");
-	private static readonly rightArrowIcon = new vscode.ThemeIcon("arrow-right");
-	private static readonly cloudIcon = new vscode.ThemeIcon("cloud");
-	private static readonly brokenConnectionIcon = new vscode.ThemeIcon("alert");
-	private static readonly peersCountIcon = new vscode.ThemeIcon("extensions-install-count");
+	// tree item icons
+	private static readonly emptyIcon = new vscode.ThemeIcon("non-icon"); // NOI18N
+	private static readonly rightArrowIcon = new vscode.ThemeIcon("arrow-right"); // NOI18N
+	private static readonly cloudIcon = new vscode.ThemeIcon("cloud"); // NOI18N
+	private static readonly brokenConnectionIcon = new vscode.ThemeIcon("alert"); // NOI18N
+	private static readonly peersCountIcon = new vscode.ThemeIcon("extensions-install-count"); // NOI18N
+	
+	// Tree item properties and the logic to update it.
 	private static readonly properties = {
 		[NodeConfigProperty.Status.toLowerCase()]: {
 			iconPath: NodeTreeItem.cloudIcon,
-			id: "status", // NOI18
+			id: "status", // NOI18N
 			listener: {
 				onUpdate: async (treeItem: NodeTreeItem) => {
 					const healthy: boolean = await client.isNodeHealthy();
@@ -198,7 +215,7 @@ class NodeTreeItem extends vscode.TreeItem {
 		},
 		[NodeConfigProperty.Peers.toLowerCase()]: {
 			iconPath: NodeTreeItem.peersCountIcon,
-			id: "peers", // NOI18
+			id: "peers", // NOI18N
 			listener: {
 				onUpdate: async (treeItem: NodeTreeItem) => {
 					const health = await client.isNodeHealthy();
@@ -207,7 +224,7 @@ class NodeTreeItem extends vscode.TreeItem {
 						const { name } = NodeTreeItem.properties[NodeConfigProperty.Peers.toLowerCase()];
 						treeItem.label = `${name}: ${peers.toString()}`;
 						treeItem.iconPath = NodeTreeItem.peersCountIcon;
-					} else { // don't show the item content 
+					} else { // don't show the item content is connection is broken
 						treeItem.label = "";
 						treeItem.iconPath = NodeTreeItem.emptyIcon;
 					}
@@ -216,15 +233,14 @@ class NodeTreeItem extends vscode.TreeItem {
 			name: "Node peers",
 			root: true
 		},
-		[NodeConfigProperty.Error1.toLowerCase()]: {
+		[NodeConfigProperty.WarningConnection.toLowerCase()]: {
 			iconPath: NodeTreeItem.emptyIcon,
-			id: "error1", // NOI18
+			id: "warningconnection", // NOI18N
 			listener: {
 				onUpdate: async (treeItem: NodeTreeItem) => {
 					const healthy: boolean = await client.isNodeHealthy();
 					treeItem.label = healthy ? "" : "👋 Read how to install and configure Pyrsia";
-					const iconPath = healthy ? NodeTreeItem.emptyIcon : NodeTreeItem.rightArrowIcon;
-					treeItem.iconPath = iconPath;
+					treeItem.iconPath = healthy ? NodeTreeItem.emptyIcon : NodeTreeItem.rightArrowIcon;
 					treeItem.command = healthy ? undefined : {
 						arguments: [HelpUtil.quickStartUrl],
 						command: HelpUtil.helpCommandId,
@@ -235,9 +251,9 @@ class NodeTreeItem extends vscode.TreeItem {
 			name: "",
 			root: true
 		},
-		[NodeConfigProperty.Error2.toLowerCase()]: {
+		[NodeConfigProperty.WarningUpdateNode.toLowerCase()]: {
 			iconPath: NodeTreeItem.emptyIcon,
-			id: "error2", // NOI18
+			id: "warningupdatenode", // NOI18N
 			listener: {
 				onUpdate: async (treeItem: NodeTreeItem) => {
 					const healthy: boolean = await client.isNodeHealthy();
@@ -265,7 +281,7 @@ class NodeTreeItem extends vscode.TreeItem {
 		this.tooltip = this.label;
 	}
 
-	static create(nodeProperty: NodeConfigProperty): NodeTreeItem {
+	public static create(nodeProperty: NodeConfigProperty): NodeTreeItem {
 		const property = this.properties[nodeProperty];
 		const collapsibleState = vscode.TreeItemCollapsibleState.None;
 		return new NodeTreeItem(
@@ -278,19 +294,22 @@ class NodeTreeItem extends vscode.TreeItem {
 		);
 	}
 
-	static getChildrenId(parentId: string) {
+	public static getChildrenId(parentId: string) {
 		return `${parentId}value`;
 	}
 
-	update() {
+	public update() {
 		this.listener.onUpdate(this);
 	}
 
-	isRoot(): boolean {
+	public isRoot(): boolean {
 		return this.root;
 	}
 }
 
+/**
+ * Node Config Tree Item update interface
+ */
 interface NodeConfigListener {
 	onUpdate(treeItem: NodeTreeItem): void;
 }

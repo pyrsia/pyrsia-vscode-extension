@@ -10,6 +10,8 @@
         "pyrsiaoverview",
         "reportissue",
         "VSIX",
+        "warningconnection",
+        "warningupdatenode",
         "webviews"
     ]
 }

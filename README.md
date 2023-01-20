@@ -32,11 +32,14 @@ npm run test
 - Run the tests and linter.
 
     ```sh
+    npm run compile
     npm run lint
     npm run test
     ```
 
 ## How to package, install and uninstall Pyrsia extension in the IDE
+
+The Pyrsia extension is not available in the VS Code store yet, it's necessary to manually install the extension as described below.
 
 ### Package and Install (side-load extension)
 
@@ -46,7 +49,7 @@ npm run test
     npm install -g @vscode/vsce
     ```
 
-- In the repository folder compile and package the extension as follows.
+- In the extension repository folder package the extension as follows.
 
     ```sh
     vsce package
@@ -55,7 +58,7 @@ npm run test
 - If the packaging was successful the last line of the VSCE logs should contain the `vsix` file path, for example:
 
     ```sh
-    DONE  Packaged: /home/john/repositories/pyrsia-vscode-extension/pyrsia-integration-0.0.1.vsix (960 files, 2.2MB)
+    DONE  Packaged: /home/joed/repositories/pyrsia-vscode-extension/pyrsia-integration-0.0.1.vsix (960 files, 2.2MB)
     ```
 
 - Copy the `vsix` file path and install the extension as follows.

@@ -1,45 +1,51 @@
+/* eslint-disable @typescript-eslint/member-ordering */
 // https://github.com/xojs/eslint-config-xo-typescript/issues/43
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
-import { Integration, IntegrationTreeItem, Event } from '../integrations/api/Integration'; // NOI18
+import { Integration, IntegrationTreeItem, Event } from '../api/Integration'; // NOI18N
 
+/**
+ * Integrations view.
+ */
 export class IntegrationsView {
-	private static readonly refreshIntegrationModelCommandId: string = "pyrsia.integrations.model.update"; // NOI18
-	private static readonly refreshIntegrationViewCommandId: string = "pyrsia.integrations.view.update"; // NOI18
-	private static readonly refreshIntegrationCommandId: string = "pyrsia.integrations.update"; // NOI18
-	private static readonly viewType: string = "pyrsia.node-integrations"; // NOI18
+	private static readonly refreshIntegrationModelCommandId: string = "pyrsia.integrations.model.update"; // NOI18N
+	private static readonly refreshIntegrationViewCommandId: string = "pyrsia.integrations.view.update"; // NOI18N
+	private static readonly refreshIntegrationCommandId: string = "pyrsia.integrations.update"; // NOI18N
+	private static readonly viewType: string = "pyrsia.node-integrations"; // NOI18N
 	
-	private readonly treeViewProvider: NodeIntegrationsTreeProvider;
+	private readonly treeViewProvider: IntegrationsTreeProvider;
 	private readonly _view?: vscode.TreeView<string>;
 
 	constructor(context: vscode.ExtensionContext) {
-
-		this.treeViewProvider = new NodeIntegrationsTreeProvider();
-
+		this.treeViewProvider = new IntegrationsTreeProvider();
 		this._view = vscode.window.createTreeView(
 			IntegrationsView.viewType,
 			{ showCollapseAll: true, treeDataProvider: this.treeViewProvider }
 		);
-
 		this.treeViewProvider.update();
 
+		// register update model command
 		vscode.commands.registerCommand(IntegrationsView.refreshIntegrationModelCommandId, () => {
 			this.treeViewProvider.update();
 		});
 
+		// register update view command
 		vscode.commands.registerCommand(IntegrationsView.refreshIntegrationViewCommandId, () => {
-			this.treeViewProvider.refreshTreeView();
+			this.treeViewProvider.updateTreeView();
 		});
 
+		// register command that update both - mode and view
 		vscode.commands.registerCommand(IntegrationsView.refreshIntegrationCommandId, () => {
 			this.treeViewProvider.update();
-			this.treeViewProvider.refreshTreeView();
+			this.treeViewProvider.updateTreeView();
 		});
 
+		// triggered the update when view is shown
 		this._view.onDidChangeVisibility(() => {
 			this.treeViewProvider.update();
 		});
 
+		// triggered the update on the selection change
 		this._view.onDidChangeSelection(() => {
 			this.treeViewProvider.update();
 		});
@@ -47,22 +53,31 @@ export class IntegrationsView {
 		context.subscriptions.push(this._view);
 	}
 
-	static requestIntegrationsModelUpdate(): void {
-		vscode.commands.executeCommand(this.refreshIntegrationModelCommandId);
-	}
-
+	/**
+	 * Requests update view.
+	 */
 	static requestIntegrationsViewUpdate(): void {
 		vscode.commands.executeCommand(this.refreshIntegrationViewCommandId);
 	}
 
+	/**
+	 * Requests update view and model.
+	 */
 	static requestIntegrationsUpdate(): void {
 		vscode.commands.executeCommand(this.refreshIntegrationCommandId);
 	}
 
-	addIntegration(integration: Integration): void {
+	/**
+	 * Add an integration instance for the Integrations view (e.g. DockerIntegration, etc)
+	 * @param {Integration} integration
+	 */
+	addIntegration(integration: Integration) {
 		this.treeViewProvider.addIntegration(integration);
 	}
 
+	/**
+	 * Triggers the tree provider update.
+	 */
 	async update(): Promise<void> {
 		if (this.treeViewProvider) {
 			await this.treeViewProvider.update();
@@ -70,17 +85,15 @@ export class IntegrationsView {
 	}
 }
 
-class NodeIntegrationsTreeProvider implements vscode.TreeDataProvider<string> {
+/**
+ * Integration view tree provider.
+ */
+class IntegrationsTreeProvider implements vscode.TreeDataProvider<string> {
 	// on change tree data
 	private _onDidChangeTreeData: vscode.EventEmitter<string | undefined | null | void> =
 		new vscode.EventEmitter<string | undefined | null | void>();
-	// eslint-disable-next-line @typescript-eslint/member-ordering
 	readonly onDidChangeTreeData: vscode.Event<string | undefined | null | void> = this._onDidChangeTreeData.event;
-
-	// on visibility change
-	// private _onDidChangeVisibility: vscode.EventEmitter<string | undefined | null | void> = new vscode.EventEmitter<string | undefined | null | void>();
-	// readonly onDidChangeVisibility: vscode.Event<string | undefined | null | void> = this._onDidChangeVisibility.event;
-
+	// integrations (e.g. DockerIntegration)
 	private readonly integrations: Set<Integration> = new Set<Integration>();
 
 	addIntegration(integration: Integration): void {
@@ -127,7 +140,8 @@ class NodeIntegrationsTreeProvider implements vscode.TreeDataProvider<string> {
 		return item;
 	}
 
-	refreshTreeView(): void {
+	// fires the tree view update (UI)
+	updateTreeView(): void {
 		this._onDidChangeTreeData.fire(undefined);
 	}
 }

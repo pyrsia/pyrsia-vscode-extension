@@ -1,7 +1,7 @@
 {
-  "name": "pyrsia-integration",
+  "name": "pyrsia-extension",
   "displayName": "Pyrsia",
-  "description": "Pyrsia Integration for VS Code",
+  "description": "Pyrsia Extension for VS Code",
   "version": "0.0.1",
   "repository": {
     "type": "git",
@@ -44,37 +44,43 @@
     },
     "commands": [
       {
-        "command": "pyrsia.replace-docker-images",
-        "title": "Replace Docker Images with Pyrsia images",
+        "command": "pyrsia.docker.replace-images",
+        "title": "Reload Docker Images with Pyrsia",
         "shortTitle": "Replace images",
         "icon": "$(refresh)"
       },
       {
-        "command": "pyrsia.configure-node",
+        "command": "pyrsia.node-config.update-url",
         "title": "Update Pyrsia Node URL",
         "shortTitle": "Update Pyrsia node URL",
         "icon": "$(gear)"
       },
       {
-        "command": "pyrsia.update-docker-conf",
-        "title": "Add Pyrsia to Docker Configuration",
-        "shortTitle": "Add Pyrsia to Docker configuration",
+        "command": "pyrsia.docker.update-config",
+        "title": "Open Docker Configuration",
+        "shortTitle": "Open and Update Docker Configuration",
         "icon": "$(gear)"
       },
       {
-        "command": "pyrsia.request-docker-build",
+        "command": "pyrsia.docker.request-build",
         "title": "Add Image to Pyrsia",
         "shortTitle": "Add selected image to Pyrsia",
         "icon": "$(server-environment)"
       },
       {
-        "command": "pyrsia.open-docker-trans-log",
+        "command": "pyrsia.docker.open-trans-log",
         "title": "Open Pyrsia Transparency Log",
         "shortTitle": "Open Pyrsia Transparency Log",
         "icon": "$(file-code)"
       },
       {
         "command": "pyrsia.integrations.update",
+        "title": "Refresh",
+        "shortTitle": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "pyrsia.node-config.update-view",
         "title": "Refresh",
         "shortTitle": "Refresh",
         "icon": "$(refresh)"
@@ -86,36 +92,36 @@
           "command": "pyrsia.integrations.update",
           "when": "view == pyrsia.node-integrations",
           "group": "navigation"
+        },
+        {
+          "command": "pyrsia.node-config.update-view",
+          "when": "view == pyrsia.node-config",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
           {
-            "command": "pyrsia.replace-docker-images",
+            "command": "pyrsia.docker.replace-images",
             "when": "view == pyrsia.node-integrations && viewItem == pyrsia.docker",
             "group": "pyrsia-integration"
           },
           {
-            "command": "pyrsia.configure-node",
+            "command": "pyrsia.node-config.update-url",
             "when": "view == pyrsia.node-config",
             "group": "pyrsia-config"
           },
           {
-            "command": "pyrsia.update-docker-conf",
-            "when": "view == pyrsia.node-integrations && viewItem == pyrsia.docker.configfile",
+            "command": "pyrsia.docker.update-config",
+            "when": "view == pyrsia.node-integrations && viewItem == pyrsia.docker.config-file",
             "group": "pyrsia-integration"
           },
           {
-            "command": "pyrsia.request-docker-build",
+            "command": "pyrsia.docker.request-build",
             "when": "view == pyrsia.node-integrations && viewItem == pyrsia.docker.not-pyrsia",
             "group": "pyrsia-integration"
           },
           {
-            "command": "pyrsia.request-docker-build",
-            "when": "view == pyrsia.node-integrations && viewItem == pyrsia.docker.not-pyrsia",
-            "group": "pyrsia-integration"
-          },
-          {
-            "command": "pyrsia.open-docker-trans-log",
+            "command": "pyrsia.docker.open-trans-log",
             "when": "view == pyrsia.node-integrations && viewItem == pyrsia.docker.is-pyrsia",
             "group": "pyrsia-integration"
           }

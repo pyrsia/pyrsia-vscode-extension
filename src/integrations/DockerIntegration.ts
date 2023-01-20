@@ -1,82 +1,105 @@
 /* eslint-disable @typescript-eslint/member-ordering */
 import * as os from "os";
-import * as fsUtils from "../../utilities/fsUtils";
 import { Event, Integration, IntegrationTreeItem } from "../api/Integration";
 import * as path from 'path';
-import { Util } from "../../utilities/util";
+import { Util } from "../utilities/Util";
 import * as vscode from "vscode";
-import * as client from "../../utilities/pyrsiaClient";
-import { IntegrationsView } from "../../webviews/IntegrationsView";
+import * as client from "../utilities/pyrsiaClient";
+import { IntegrationsView } from "../webviews/IntegrationsView";
 
+/**
+ * Implements Docker support for Pyrsia.
+ */
 export class DockerIntegration implements Integration {
-	//confirm options
+	//dialog options
 	static readonly confirmOption = "Yes";
 	static readonly cancelOption = "No";
+	static readonly closeOption = "Close";
 	
 	// command Ids
-	static readonly updateDockerConfCommandId = "pyrsia.update-docker-conf";
-	static readonly replaceDockerImagesCommandId = "pyrsia.replace-docker-images";
-	private static readonly openDockerTransparencyLog = "pyrsia.open-docker-trans-log";
-	private static readonly integrationId: string = "pyrsia.docker";
-	private static readonly requestBuildId: string = "pyrsia.request-docker-build";
+	static readonly updateDockerConfCommandId = "pyrsia.docker.update-config"; // NOI18N
+	static readonly reloadDockerImagesCommandId = "pyrsia.docker.replace-images"; // NOI18N
+	private static readonly openDockerTransparencyLog = "pyrsia.docker.open-trans-log"; // NOI18N
+	private static readonly integrationId: string = "pyrsia.docker"; // NOI18N
+	private static readonly requestBuildId: string = "pyrsia.docker.request-build"; // NOI18N
 
 	// context values
-	static readonly imageNotPyrsiaContextValue = `${DockerIntegration.integrationId}.not-pyrsia`;
-	static readonly imagePyrsiaContextValue = `${DockerIntegration.integrationId}.is-pyrsia`;
-	static readonly imageUpdatingContextValue = `${DockerIntegration.integrationId}.updating`;
+	static readonly imageNotPyrsiaContextValue = "pyrsia.docker.not-pyrsia"; // NOI18N
+	static readonly imagePyrsiaContextValue = "pyrsia.docker.is-pyrsia"; // NOI18N
+	static readonly imageUpdatingContextValue = "pyrsia.docker.updating"; // NOI18N
 
 	// tree item ids
-	static readonly configFileItemIdPrefix: string = `${this.integrationId}.configfile`;
-	private static readonly imageItemIdPrefix: string = `${this.integrationId}.dockerimage`;
-	private static readonly configItemId: string = `${this.integrationId}.configs`;
-	private static readonly imagesItemId: string = `${this.integrationId}.images`;
-	// docker config files search path
-	private static confMap: Map<string, string> = new Map<string, string>();
-	private static readonly registryMirrorsConfName = "registry-mirrors";
-	
-	// item names
-	private static readonly dockerTreeItemName = "Docker";
-	private static readonly warningIconPath: vscode.ThemeIcon = new vscode.ThemeIcon("warning"); // NOI18
+	static readonly configFileItemIdPrefix: string = "pyrsia.docker.config-file";
+	private static readonly imageItemIdPrefix: string = "pyrsia.docker.docker-image";
+	private static readonly configItemId: string = "pyrsia.docker.configs";
+	private static readonly imagesItemId: string = "pyrsia.docker.images";
 
+	// pre defined docker config files (this is where we look for the docker config)
+	private static dockerConfigPathsMap: Map<string, string> = new Map<string, string>();
+	// Used in the docker configuration logic (the property we have to update)
+	private static readonly registryMirrorsName = "registry-mirrors";
+	
+	// 'static' tree items props
+	private static readonly mainTreeItemName = "Docker";
+	private static readonly configTreeItemName = "Configuration";
+	private static readonly imagesTreeItemName = "Images";
+	private static readonly warningIconPath: vscode.ThemeIcon = new vscode.ThemeIcon("warning"); // NOI18N
+	private readonly mainTreeItemIconPath: { light: string | vscode.Uri; dark: string | vscode.Uri; };
+
+	// this is where we store all of the tree items
 	private readonly treeItems: Map<string, IntegrationTreeItem> = new Map<string, IntegrationTreeItem>();
-	private readonly dockerIconPath: { light: string | vscode.Uri; dark: string | vscode.Uri; };
 
 	static {
-		DockerIntegration.confMap.set(path.join(os.homedir(), ".docker"), "daemon.json");
+		// TODO add support for windows!
+		DockerIntegration.dockerConfigPathsMap.set(path.join(os.homedir(), ".docker"), "daemon.json");
 	}
 	
 	constructor(context: vscode.ExtensionContext) {
-		// get the icon paths
-		this.dockerIconPath = {
-			dark: path.join(Util.getResourceImagePath(), "docker_small.svg"), //TODO update to dark
-			light: path.join(Util.getResourceImagePath(), "docker_small.svg") //TODO update to light
+		// get the icon info for the main tree item (Docker)
+		this.mainTreeItemIconPath = {
+			dark: path.join(Util.getResourceImagePath(), "docker_small_dark.svg"), 
+			light: path.join(Util.getResourceImagePath(), "docker_small_dark.svg") //TODO create the "light" icon
 		};
 
 		// create and add the "non-dynamic" docker tree items.
-		this.createTreeItems(this.treeItems);
+		this.createBaseTreeItems();
 
 		// register the docker commands
 		this.registerCommands(context);
 	}
 
+	/**
+	 * Returns the image tree item ID (only docker images)
+	 * @param {string} imageName  - docker image name (tags)
+	 * @returns {string} - tree item ID
+	 */
 	private static getTreeItemImageId(imageName: string): string {
 		return `${DockerIntegration.imageItemIdPrefix}.${imageName}`;
 	}
 
+	/**
+	 * This function replaces the local docker images and pulls them again,
+	 * preferable from Pyrsia if properly configured and if available in Pyrsia.
+	 * @return {Promise<void>} void
+	 */
 	async replaceImagesWithPyrsia(): Promise<void> {
-		// look for docker images
+		// TODO This logic should check two conditions and fail if not met
+		// 1) If docker is configured to use Pyrsia node
+		// 2) If the node is listed as docker's proxy (registry)
+
+		// get the local docker images
 		const dockerClient = Util.getDockerClient();
 		const images = await dockerClient.listImages();
 		const allContainers = await dockerClient.listContainers({ "all": true });
-		images.forEach(async (imageInfo) => {
+		for (const imageInfo of images) {
 			const imageName = imageInfo.RepoTags?.join();
-			// no image tags? => skip the image
+			// no image tags? => skip it
 			if (!imageName) {
-				return;
+				continue;
 			}
-			// only update the images which are available  in Pyrsia
+			// only update the images which are available in Pyrsia
+			// eslint-disable-next-line no-await-in-loop
 			const transImageLog: [] = await client.getDockerTransparencyLog(imageName);
-			await this.updateModel(false);
 			if (transImageLog.length > 0) {
 				// remove the old images first
 				try {
@@ -84,64 +107,73 @@ export class DockerIntegration implements Integration {
 					const containers = allContainers.filter((container) => {
 						return container.Image === imageName;
 					});
+
+					// if the image has containers go to hell (skip it and warn the user)
 					if (containers.length > 0) {
-						await vscode.window.showErrorMessage(
-							// eslint-disable-next-line max-len
-							`Replacing the docker images failed because '${imageName}' image 
-							has containers, please remove the relevant docker containers and try again.`,
-							"Close"
+						vscode.window.showErrorMessage(
+							`Reloading the '${imageName}' docker image 
+							failed because it has container(s) attached, please remove the container(s) and try again.`,
+							DockerIntegration.closeOption
 						);
-						return;
+						continue;
 					}
-					// delete the image
+
+					// delete the image first before pulling
 					dockerClient.getImage(imageInfo.Id).remove({ force: true }, (error) => {
 						if (error) {
+							// something went wrong, warn the user then go to the next image
 							vscode.window.showErrorMessage(
-								// eslint-disable-next-line max-len
-								`Replacing the docker images failed because '${imageName}' image 
-								has containers, please remove the relevant docker containers and try again.`,
-								"Close"
+								`Reloading the '${imageName}' docker image 
+								failed, Error: ${error}`,
+								DockerIntegration.closeOption
 							);
 							return;
 						}
+						// pull the deleted image and show the progress (icons in the Integrations view)
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						dockerClient.pull(imageName, (err: string, stream: any) => {
 							console.log(err);
+
+							// this one is executed when the pulling is done
 							const onFinished = (error_: unknown, output: unknown) => {
 								if (error_) {
 									console.error(error_);
 								}
 								console.log(output);
+								// delete the tree item representing the image, it will be recreated on the next update
 								this.treeItems.delete(DockerIntegration.getTreeItemImageId(imageName));
+								// request the view (UI) update
 								IntegrationsView.requestIntegrationsUpdate();
 							};
 
+							// this method is periodically called as the image is being pulled
 							const onProgress = (event: unknown) => {
 								console.log(event);
 								const treeItem = this.treeItems.get(DockerIntegration.getTreeItemImageId(imageName));
 								if (treeItem) {
-									treeItem.label = `Updating '${imageName}' with Pyrsia image.`;
+									treeItem.label = `Pulling '${imageName}'`;
 									treeItem.iconPath = DockerImageTreeItem.iconPathPullDocker;
 									treeItem.contextValue = DockerIntegration.imageUpdatingContextValue;
 								}
-								// let the model update know that the pulling is in progress which means some images might be not be present yet
+								// request the model the view (UI) update
 								this.updateModel(true);
 								IntegrationsView.requestIntegrationsViewUpdate();
 							};
+							// request the view (UI) update
 							dockerClient.modem.followProgress(stream, onFinished, onProgress);
 						});
 					});
 				} catch (err) {
+					// pulling unsuccessfully, show the error (only in the debug mode)
 					Util.debugMessage(`Couldn't replace image: ${imageInfo.Labels}, error: ${err}`);
+					// request the view (UI) update
 					IntegrationsView.requestIntegrationsUpdate();
 				}
 			}
-		});
+		}
 	}
 
 	getTreeItemChildren(parentId?: string | undefined): string[] {
-		console.log(`${parentId}`);
-
 		let children: string[] = [];
 		switch (parentId) {
 			case DockerIntegration.integrationId:
@@ -171,10 +203,6 @@ export class DockerIntegration implements Integration {
 
 	getTreeItem(treeItemId: string): IntegrationTreeItem | undefined {
 		return this.treeItems.get(treeItemId);
-	}
-
-	getId(): string {
-		return DockerIntegration.integrationId;
 	}
 
 	async update(event: Event): Promise<void> {
@@ -211,22 +239,23 @@ export class DockerIntegration implements Integration {
 		const dockerTreeItem = this.treeItems.get(DockerIntegration.integrationId);
 		if (dockerTreeItem && (!isDockerUp || !isPyrsiaNodeUp)) {
 			// create warning tree item and hide the rest of the tree items 
-			dockerTreeItem.label = `${DockerIntegration.dockerTreeItemName} (Pyrsia node or Docker is disconnected)`;
+			dockerTreeItem.label = `${DockerIntegration.mainTreeItemName} (Pyrsia Node or Docker is unavailable)`;
 			dockerTreeItem.tooltip = "Please make sure that Docker service and Pyrsia node is up and configured";
 			dockerTreeItem.iconPath = DockerIntegration.warningIconPath;
 			dockerTreeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
 			dockerTreeItem.command = undefined;
+			dockerTreeItem.contextValue = undefined;
 		} else {
 			// recreate the docker tree item
 			this.createDockerTreeItem();
 
 			// find the docker conf file(s) (macos, linux). TODO Windows
-			for (const confPath of DockerIntegration.confMap.keys()) {
-				const fileName = DockerIntegration.confMap.get(confPath);
+			for (const confPath of DockerIntegration.dockerConfigPathsMap.keys()) {
+				const fileName = DockerIntegration.dockerConfigPathsMap.get(confPath);
 				if (!fileName) {
 					throw new Error("Configuration file name cannot be null");
 				}
-				fsUtils.findByName(confPath, fileName).then((confFilePath) => {
+				Util.findFile(confPath, fileName).then((confFilePath) => {
 					if (confFilePath) {
 						const id = `${DockerIntegration.configFileItemIdPrefix}.${confFilePath}`;
 						const label = `${confFilePath}`;
@@ -245,14 +274,14 @@ export class DockerIntegration implements Integration {
 			const images = await dockerClient.listImages();
 			const currentImages: string[] = [];
 
-			images.forEach(async (image) => {
+			for (const image of images) {
 				const imageName = image.RepoTags?.join();
 				if (imageName?.startsWith("<none>")) {
-					return;
+					continue;
 				}
 				// no image tags? => skip the image
 				if (!imageName) {
-					return;
+					continue;
 				}
 				const id = DockerIntegration.getTreeItemImageId(imageName);
 				const imageItem = new DockerImageTreeItem(
@@ -261,12 +290,13 @@ export class DockerIntegration implements Integration {
 				);
 				currentImages.push(id);
 				// check if image exists in pyrsia
+				// eslint-disable-next-line no-await-in-loop
 				const transImageLog: [] = await client.getDockerTransparencyLog(imageName);
 				imageItem.update({ pyrsia: transImageLog.length > 0 });
 
 				// add item to the tree items map
 				this.treeItems.set(id, imageItem);
-			});
+			}
 
 			// remove deleted images
 			if (!pullingInProgress) {
@@ -308,9 +338,9 @@ export class DockerIntegration implements Integration {
 					// Get the docker config as JSON object
 					const dockerConfigJson = JSON.parse(textDocument.getText());
 					// Get the current node configuration
-					const { host } = Util.getNodeConfig();
+					const host = Util.getNodeConfig().hostWithProtocol;
 					// Check if the docker config has to be updated.
-					let registryMirrors: string[] = dockerConfigJson[DockerIntegration.registryMirrorsConfName];
+					let registryMirrors: string[] = dockerConfigJson[DockerIntegration.registryMirrorsName];
 					let updateConfig = false;
 					if (registryMirrors) {
 						updateConfig = !!registryMirrors.find((mirror: string) => {
@@ -334,7 +364,7 @@ export class DockerIntegration implements Integration {
 							textEditor.edit(edit => {
 								if (!registryMirrors) { // no mirrors found, add one for the pyrsia node
 									registryMirrors = [];
-									dockerConfigJson[DockerIntegration.registryMirrorsConfName] = registryMirrors;
+									dockerConfigJson[DockerIntegration.registryMirrorsName] = registryMirrors;
 								}
 								// update document only when the docker config was updated
 								registryMirrors.push(host);
@@ -365,10 +395,10 @@ export class DockerIntegration implements Integration {
 
 		// docker command to open and update configuration editor command for the docker integration
 		const replaceDockerWithPyrsiaImages = vscode.commands.registerCommand(
-			DockerIntegration.replaceDockerImagesCommandId,
+			DockerIntegration.reloadDockerImagesCommandId,
 			async () => {
 				const result = await vscode.window.showInformationMessage(
-					"👋 Are you sure you'd like to replace all local docker images with the Pyrsia images?",
+					"👋 This operation will attempt to replace the local Docker images with images hosted by Pyrsia? Would you like to continue?",
 					DockerIntegration.confirmOption,
 					DockerIntegration.cancelOption
 				);
@@ -440,41 +470,43 @@ export class DockerIntegration implements Integration {
 
 	private createDockerTreeItem() {
 		// create "Docker" tree item
-		const dockerTreeItem = new DockerTreeItem(DockerIntegration.integrationId, "Docker", this.dockerIconPath);
+		const dockerTreeItem = new DockerTreeItem(DockerIntegration.integrationId, "Docker", this.mainTreeItemIconPath);
 		dockerTreeItem.contextValue = DockerIntegration.integrationId;
 		this.treeItems.set(DockerIntegration.integrationId, dockerTreeItem);
 	}
 
-	private createTreeItems(treeItems: Map<string, vscode.TreeItem>) {
+	private createBaseTreeItems() {
 		// create "Docker" tree item
 		this.createDockerTreeItem();
 
 		// create Docker "Configuration" tree item
-		treeItems.set(
+		this.treeItems.set(
 			DockerIntegration.configItemId,
 			new DockerTreeItem(
 				DockerIntegration.configItemId,
-				"Configuration",
-				new vscode.ThemeIcon("gear") // NOI18
+				DockerIntegration.configTreeItemName,
+				new vscode.ThemeIcon("gear") // NOI18N
 			)
 		);
 
 		// create docker "Images" tree item
 		const imagesTreeItem = new DockerTreeItem(
 			DockerIntegration.imagesItemId,
-			"Images",
-			new vscode.ThemeIcon("folder-library") // NOI18
+			DockerIntegration.imagesTreeItemName,
+			new vscode.ThemeIcon("folder-library") // NOI18N
 		);
 		imagesTreeItem.contextValue = DockerIntegration.integrationId;
-		treeItems.set(
+		this.treeItems.set(
 			DockerIntegration.imagesItemId,
 			imagesTreeItem
 		);
 	}
 }
 
+// Docker Tree Item which represents the Docker configuration files
 class DockerConfigTreeItem extends IntegrationTreeItem {
-	private static iconPath: vscode.ThemeIcon = new vscode.ThemeIcon("go-to-file"); // NOI18
+	// icon (path)
+	private static iconPath: vscode.ThemeIcon = new vscode.ThemeIcon("go-to-file"); // NOI18N
 
 	constructor(
 		public label: string,
@@ -487,7 +519,7 @@ class DockerConfigTreeItem extends IntegrationTreeItem {
 		this.command = {
 			arguments: [this],
 			command: DockerIntegration.updateDockerConfCommandId,
-			title: "Open Docker configuration file"
+			title: "Open Docker Configuration File"
 		};
 
 		this.iconPath = DockerConfigTreeItem.iconPath;
@@ -515,8 +547,8 @@ class DockerTreeItem extends IntegrationTreeItem {
 }
 
 class DockerImageTreeItem extends IntegrationTreeItem {
-	static readonly iconPathPullDocker: vscode.ThemeIcon = new vscode.ThemeIcon("sync"); // NOI18
-	private static readonly defaultIconPath: vscode.ThemeIcon = new vscode.ThemeIcon("archive"); // NOI18
+	static readonly iconPathPullDocker: vscode.ThemeIcon = new vscode.ThemeIcon("sync"); // NOI18N
+	private static readonly defaultIconPath: vscode.ThemeIcon = new vscode.ThemeIcon("archive"); // NOI18N
 	readonly pyrsiaIconPath: { dark: string, light: string };
 
 	constructor(

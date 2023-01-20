@@ -2,40 +2,30 @@ import * as vscode from "vscode";
 import { NodeConfigView } from "./webviews/NodeConfigView";
 // import { NodeStatusViewProvider } from "./webviews/NodeStatusView";
 import { IntegrationsView as IntegrationsView } from "./webviews/IntegrationsView";
-import { Util } from "./utilities/util";
+import { Util } from "./utilities/Util";
 import { HelpView } from "./webviews/HelpView";
-import { Integration } from "./integrations/api/Integration";
-import { DockerIntegration } from "./integrations/impl/DockerIntegration";
+import { Integration } from "./api/Integration";
+import { DockerIntegration } from "./integrations/DockerIntegration";
 
 export const activate = (context: vscode.ExtensionContext) => {
-	// initialize the util
+	// Init the extension utils
 	Util.init(context);
 
-	// Node status web view provider, this is debug only view, disabled for now
-	//new NodeStatusViewProvider(context);
-
-	// Create integrations
+	// Create docker integration
 	const dockerIntegration: Integration = new DockerIntegration(context);
 
-	// Node status config view
+	// Create the node config view
 	const nodeConfigView = new NodeConfigView(context);
 	nodeConfigView.addIntegration(dockerIntegration);
 
-	// Node status config view
+	// Create the integrations view
 	const integrationView = new IntegrationsView(context);
 	integrationView.addIntegration(dockerIntegration);
 
-	// Node status config view
+	// Create Help view
 	new HelpView(context);
-
-	//Notify the Node Config View when connected to node
-	// nodeView.onDidConnect({
-	// 	onDidConnect() {
-	// 		nodeConfigView.update();
-	// 	},
-	// });
 };
 
 export const deactivate = () => {
-	console.log("Pyrsia extension deactivated"); // TODO
+	console.debug("Pyrsia extension deactivated");
 };
