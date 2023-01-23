@@ -1,8 +1,8 @@
 {
   "name": "pyrsia-extension",
   "displayName": "Pyrsia",
-  "description": "Pyrsia Extension for VS Code",
-  "version": "0.0.1",
+  "description": "Pyrsia VS Code Extension",
+  "version": "0.1.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/pyrsia/pyrsia-vscode-extension"

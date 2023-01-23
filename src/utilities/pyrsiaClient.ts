@@ -66,7 +66,7 @@ export const getStatus = async (): Promise<any> => {
 
 /**
  * Returns Pyrsia Transparency Log.
- * @params {string} docker image name
+ * @param {string} imageName - docker image name
  * @returns {Promise<[]>} docker transparency log
  */
 export const getDockerTransparencyLog = async (imageName: string): Promise<[]> => {
@@ -90,8 +90,8 @@ export const getDockerTransparencyLog = async (imageName: string): Promise<[]> =
 
 /**
  * Request docker build (adds a new docker image to Pyrsia)
- * @params {string} docker image name (tags)
- * @param imageName
+ * @param {string} imageName docker image name (tags)
+ * @returns {Promise[]} - the build info (mostly the build ID)
  */
 export const requestDockerBuild = async (imageName: string): Promise<[]> => {
 	console.log(`Request build for docker image: ${imageName}`);

@@ -14,11 +14,12 @@ export class Util {
 
 	/**
 	 * It's called once to pass the init values.
-	 * @param context
+	 * @param {vscode.ExtensionContext} context - extension context
+	 * @returns {void}
 	 */
-	public static init(context: vscode.ExtensionContext): void {
+	public static init(context: vscode.ExtensionContext) {
 		if (this.config) {
-			throw new Error("Utils class is already initialized")
+			throw new Error("Utils class is already initialized");
 		}
 		// set the resource path
 		Util.resourcePath = context.asAbsolutePath(path.join('resources')); // NOI18N
@@ -131,7 +132,10 @@ class NodeConfigImpl implements NodeConfig {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	constructor(workspaceState: any) {
 		this.workspaceState = workspaceState;
-		const nodeUrl = workspaceState.get(NodeConfigImpl.nodeUrlKey);
+		let nodeUrl = workspaceState.get(NodeConfigImpl.nodeUrlKey);
+		if (!nodeUrl) {
+			nodeUrl = this.defaultUrl;
+		}
 		this.url = nodeUrl;
 	}
 	

@@ -55,21 +55,24 @@ export class IntegrationsView {
 
 	/**
 	 * Requests update view.
+	 * @returns {void}
 	 */
-	static requestIntegrationsViewUpdate(): void {
+	static requestIntegrationsViewUpdate() {
 		vscode.commands.executeCommand(this.refreshIntegrationViewCommandId);
 	}
 
 	/**
 	 * Requests update view and model.
+	 * @returns {void}
 	 */
-	static requestIntegrationsUpdate(): void {
+	static requestIntegrationsUpdate() {
 		vscode.commands.executeCommand(this.refreshIntegrationCommandId);
 	}
 
 	/**
 	 * Add an integration instance for the Integrations view (e.g. DockerIntegration, etc)
-	 * @param {Integration} integration
+	 * @param {Integration} integration (e.g DockerIntegration)
+	 * @returns {void}
 	 */
 	addIntegration(integration: Integration) {
 		this.treeViewProvider.addIntegration(integration);
@@ -77,6 +80,7 @@ export class IntegrationsView {
 
 	/**
 	 * Triggers the tree provider update.
+	 * @returns {Promise<void>} void
 	 */
 	async update(): Promise<void> {
 		if (this.treeViewProvider) {
