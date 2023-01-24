@@ -1,15 +1,17 @@
 # Pyrsia VS Code Extension Changelog
 
 ## [Unreleased]
+
 Not available in the VS Code store yet.
 
-## [0.0.1] - Apr 25th, 2022
+## [0.1.0] - Apr 25th, 2022
+
 * Initial release. Features:
-  * Views: 
+  * Views:
     * Pyrsia node connection status.
     * Integrations (Docker support).
     * Help.
-  * New commands: 
+  * New commands:
     * Update Pyrsia node configuration.
     * Update the docker config.
     * Add docker image to Pyrsia (request build).
