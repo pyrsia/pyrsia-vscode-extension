@@ -5,7 +5,7 @@ import * as path from 'path';
 import { Util } from "../utilities/Util";
 import * as vscode from "vscode";
 import * as client from "../utilities/pyrsiaClient";
-import { IntegrationsView } from "../webviews/IntegrationsView";
+import { IntegrationsView } from "../views/IntegrationsView";
 
 /**
  * Implements Docker support for Pyrsia.

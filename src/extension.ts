@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
-import { NodeConfigView } from "./webviews/NodeConfigView";
+import { NodeConfigView } from "./views/NodeConfigView";
 // import { NodeStatusViewProvider } from "./webviews/NodeStatusView";
-import { IntegrationsView as IntegrationsView } from "./webviews/IntegrationsView";
+import { IntegrationsView as IntegrationsView } from "./views/IntegrationsView";
 import { Util } from "./utilities/Util";
-import { HelpView } from "./webviews/HelpView";
+import { HelpView } from "./views/HelpView";
 import { Integration } from "./api/Integration";
 import { DockerIntegration } from "./integrations/DockerIntegration";
 
