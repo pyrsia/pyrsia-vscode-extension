@@ -4,7 +4,7 @@
 
 Not available in the VS Code store yet.
 
-## [0.1.0] - Apr 25th, 2022
+## [0.1.0] - Jan 23th, 2023
 
 * Initial release. Features:
   * Views:
