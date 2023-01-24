@@ -1,11 +1,11 @@
 // https://github.com/xojs/eslint-config-xo-typescript/issues/43
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from "vscode";
-import { Util } from "../utilities/Util";
 import * as client from "../utilities/pyrsiaClient";
 import { HelpUtil } from "./HelpView";
 import { Event, Integration } from "../api/Integration";
 import { IntegrationsView } from "./IntegrationsView";
+import { Util } from "../utilities/Util";
 
 enum NodeConfigProperty {
 	Status = "status", // NOI18N
