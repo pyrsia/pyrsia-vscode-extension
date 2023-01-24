@@ -119,7 +119,7 @@ class IntegrationsTreeProvider implements vscode.TreeDataProvider<string> {
 	}
 
 	getChildren(parentId?: string | undefined): vscode.ProviderResult<string[]> {
-		console.log(parentId);
+		console.debug(parentId);
 		let children: string[] = [];
 		for (const integration of this.integrations) {
 			children = children.concat(integration.getTreeItemChildren(parentId));
@@ -139,8 +139,8 @@ class IntegrationsTreeProvider implements vscode.TreeDataProvider<string> {
 		element: string,
 		token: vscode.CancellationToken
 	): vscode.ProviderResult<vscode.TreeItem> {
-		console.log(element);
-		console.log(token);
+		console.debug(element);
+		console.debug(token);
 		return item;
 	}
 

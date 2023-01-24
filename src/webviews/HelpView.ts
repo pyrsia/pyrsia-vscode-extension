@@ -36,7 +36,7 @@ export class HelpView {
 		vscode.window.registerTreeDataProvider(HelpView.viewType, this.treeViewProvider);
 		// create the open external help link command
 		const openHelpLink = vscode.commands.registerCommand(HelpUtil.helpCommandId, (helpUrl: string) => {
-			console.log(`Open ${helpUrl} using '${HelpUtil.helpCommandId}'`); // NOI18N
+			console.debug(`Open ${helpUrl} using '${HelpUtil.helpCommandId}'`); // NOI18N
 			vscode.env.openExternal(vscode.Uri.parse(helpUrl));
 		});
 		// register the open external help link command

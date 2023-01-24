@@ -70,7 +70,7 @@ export const getStatus = async (): Promise<any> => {
  * @returns {Promise<[]>} docker transparency log
  */
 export const getDockerTransparencyLog = async (imageName: string): Promise<[]> => {
-	console.log(`Get docker image transparency log info for ${imageName}`);
+	console.debug(`Get docker image transparency log info for ${imageName}`);
 	const nodeUrl = `${Util.getNodeConfig().hostWithProtocol}/inspect/docker`;
 	let data;
 
@@ -94,7 +94,7 @@ export const getDockerTransparencyLog = async (imageName: string): Promise<[]> =
  * @returns {Promise[]} - the build info (mostly the build ID)
  */
 export const requestDockerBuild = async (imageName: string): Promise<[]> => {
-	console.log(`Request build for docker image: ${imageName}`);
+	console.debug(`Request build for docker image: ${imageName}`);
 	const nodeUrl = `${Util.getNodeConfig().hostWithProtocol}/build/docker`;
 	let data;
 	try {
@@ -116,7 +116,7 @@ export const requestDockerBuild = async (imageName: string): Promise<[]> => {
  * @returns {Pyrsia<string>} number of peers
  */
 export const getPeers = async (): Promise<string> => {
-	console.log('Get node peers');
+	console.debug('Get node peers');
 	const data = await getStatus();
 
 	return data ? data.peers_count : "0";

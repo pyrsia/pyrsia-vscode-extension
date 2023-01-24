@@ -132,14 +132,14 @@ export class DockerIntegration implements Integration {
 						// pull the deleted image and show the progress (icons in the Integrations view)
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						dockerClient.pull(imageName, (err: string, stream: any) => {
-							console.log(err);
+							console.debug(err);
 
 							// this one is executed when the pulling is done
 							const onFinished = (error_: unknown, output: unknown) => {
 								if (error_) {
 									console.error(error_);
 								}
-								console.log(output);
+								console.debug(output);
 								// delete the tree item representing the image, it will be recreated on the next update
 								this.treeItems.delete(DockerIntegration.getTreeItemImageId(imageName));
 								// request the view (UI) update
@@ -148,7 +148,7 @@ export class DockerIntegration implements Integration {
 
 							// this method is periodically called as the image is being pulled
 							const onProgress = (event: unknown) => {
-								console.log(event);
+								console.debug(event);
 								const treeItem = this.treeItems.get(DockerIntegration.getTreeItemImageId(imageName));
 								if (treeItem) {
 									treeItem.label = `Pulling '${imageName}'`;
@@ -264,7 +264,7 @@ export class DockerIntegration implements Integration {
 							new DockerConfigTreeItem(label, id, confFilePath, vscode.TreeItemCollapsibleState.None)
 						);
 					} else {
-						console.log(`No configuration for 'Docker' - ${path.join(confPath, fileName)}`);
+						console.debug(`No configuration for 'Docker' - ${path.join(confPath, fileName)}`);
 					}
 				});
 			}
@@ -542,7 +542,7 @@ class DockerTreeItem extends IntegrationTreeItem {
 	}
 
 	update(): void {
-		console.log("Nothing to update in Docker integration tree item");
+		console.debug("Nothing to update in Docker integration tree item");
 	}
 }
 

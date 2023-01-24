@@ -14,20 +14,21 @@
     "Other"
   ],
   "activationEvents": [
+    "*"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "package-explorer",
+          "id": "pyrsia",
           "title": "Pyrsia",
           "icon": "resources/images/pyrsia_white.svg"
         }
       ]
     },
     "views": {
-      "package-explorer": [
+      "pyrsia": [
         {
           "id": "pyrsia.node-config",
           "name": "Node Status"

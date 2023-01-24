@@ -3,6 +3,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch Tests",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/out/test/**/*.js"
+            ]
+        },
+        {
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}"
             ],
@@ -17,6 +30,5 @@
                 "VSCODE_DEBUG_MODE": "true"
             }
         }
-        
     ]
 }

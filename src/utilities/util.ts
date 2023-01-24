@@ -17,7 +17,7 @@ export class Util {
 	 * @param {vscode.ExtensionContext} context - extension context
 	 * @returns {void}
 	 */
-	public static init(context: vscode.ExtensionContext) {
+	public static init(context: vscode.ExtensionContext): Util {
 		if (this.config) {
 			throw new Error("Utils class is already initialized");
 		}
@@ -25,6 +25,8 @@ export class Util {
 		Util.resourcePath = context.asAbsolutePath(path.join('resources')); // NOI18N
 		// load the configuration from the context (context is used to store the node configuration - e.g URL)
 		this.config = new NodeConfigImpl(context.workspaceState);
+
+		return this;
 	}
 
 	/**
@@ -127,16 +129,12 @@ class NodeConfigImpl implements NodeConfig {
 	private static readonly nodeUrlKey: string = "PYRSIA_NODE_URL_KEY"; // NOI18N
 	
 	private nodeUrl: URL;
-	private workspaceState;
+	private workspaceState: vscode.Memento;
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	constructor(workspaceState: any) {
+	constructor(workspaceState: vscode.Memento) {
 		this.workspaceState = workspaceState;
-		let nodeUrl = workspaceState.get(NodeConfigImpl.nodeUrlKey);
-		if (!nodeUrl) {
-			nodeUrl = this.defaultUrl;
-		}
-		this.url = nodeUrl;
+		const nodeUrl: string | undefined = workspaceState.get(NodeConfigImpl.nodeUrlKey);
+		this.url = !nodeUrl ? this.defaultUrl : new URL(nodeUrl);
 	}
 	
 	get defaultUrl(): URL {

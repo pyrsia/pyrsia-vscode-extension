@@ -24,7 +24,7 @@ export class NodeConfigView {
 	private static readonly updateViewCommandId = "pyrsia.node-config.update-view"; // NOI18N
 
 	private readonly treeViewProvider: NodeConfigTreeProvider;
-	private readonly view;
+	private readonly view: vscode.TreeView<string>;
 	private readonly integrations: Set<Integration> = new Set<Integration>();
 
 	constructor(context: vscode.ExtensionContext) {
@@ -59,7 +59,7 @@ export class NodeConfigView {
 					prompt: "Update the Pyrsia node address (e.g. localhost:7888)",
 					validateInput(value) {
 						let errorMessage: string | undefined;
-						console.info(`Node configuration input: ${value}`);
+						console.debug(`Node configuration input: ${value}`);
 						if (!value.toLocaleLowerCase().startsWith(Util.getNodeConfig.prototype)) {
 							value = `${Util.getNodeConfig().protocol}://${value}`;
 						}
