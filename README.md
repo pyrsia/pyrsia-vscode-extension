@@ -18,14 +18,16 @@ Pyrsia support for Microsoft VS Code (extension).**This is an early prototype an
     npm install
     npm run watch
     ```
+- Open VS Code, in the Activity Bar select "Run and Debug" and make sure the "Lunch Extension" configuration is selected.
+- Press F5 to run the Pyrsia extension (debug mode), a new VS Code instance will appear and should have the Pyrsia extension installed (should be shown in the Activity Bar).
 
-- Press F5 to run the extension, a new VS Code instance will appear and should have the extension installed.
-
-## How to test the project (TBD)
+## How to test the project (and debug the tests)
 
 ```sh
 npm run test
 ```
+
+To debug the tests, in the Activity Bar select "Run and Debug" and make sure the "Lunch Tests" configuration the active one, press F5 to start the tests.
 
 ## Before merging or creating PR
 
