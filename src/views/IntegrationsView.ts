@@ -12,7 +12,7 @@ export class IntegrationsView {
 	private static readonly refreshIntegrationViewCommandId: string = "pyrsia.integrations.view.update"; // NOI18N
 	private static readonly refreshIntegrationCommandId: string = "pyrsia.integrations.update"; // NOI18N
 	private static readonly viewType: string = "pyrsia.node-integrations"; // NOI18N
-	
+
 	private readonly treeViewProvider: IntegrationsTreeProvider;
 	private readonly _view?: vscode.TreeView<string>;
 

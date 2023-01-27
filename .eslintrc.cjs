@@ -78,10 +78,11 @@ module.exports = {
         "object-curly-spacing": ["warn", "always"],
         "operator-linebreak": "warn",
         "semi-style": "warn",
-        "sort-keys": "warn", 
+        "sort-keys": "warn",
         "require-jsdoc": "warn",
         "no-useless-constructor": "warn",
         "prefer-destructuring": "warn",
-        "no-var": "error"
+        "no-var": "error",
+        "no-trailing-spaces": "error"
     },
   };

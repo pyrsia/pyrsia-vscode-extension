@@ -194,7 +194,7 @@ class NodeTreeItem extends vscode.TreeItem {
 	private static readonly cloudIcon = new vscode.ThemeIcon("cloud"); // NOI18N
 	private static readonly brokenConnectionIcon = new vscode.ThemeIcon("alert"); // NOI18N
 	private static readonly peersCountIcon = new vscode.ThemeIcon("extensions-install-count"); // NOI18N
-	
+
 	// Tree item properties and the logic to update it.
 	private static readonly properties = {
 		[NodeConfigProperty.Status.toLowerCase()]: {

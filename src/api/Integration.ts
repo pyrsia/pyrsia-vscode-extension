@@ -24,7 +24,7 @@ export interface Integration {
 
    /**
     * Returns an array of children ids (treeItemId).
-    * @param {string} parentId 
+    * @param {string} parentId
     * @returns {string[]} array of children IDs (treeItemId)
     */
    getTreeItemChildren(parentId?: string): string[];

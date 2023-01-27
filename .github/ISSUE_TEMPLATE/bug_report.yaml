@@ -28,7 +28,7 @@ body:
     attributes:
       label: Experienced Instance of the bug
       placeholder: |
-        VS Code Version: 
+        VS Code Version:
         Operating system:
         Pyrsia IDE Extension SHA/Version:
     validations:

@@ -12,10 +12,10 @@ export interface NodeConfig {
 	 * @returns {string} protocol
 	 */
 	get protocol(): string;
-	
+
 	/**
 	 * Getter, returns the host name as string (e.g 'localhost:7888').
-	 * @returns {string} host 
+	 * @returns {string} host
 	 */
 	get host(): string;
 

@@ -66,7 +66,7 @@ export class Util {
 
 		return this.dockerClient;
 	}
-	
+
 	/**
 	 * Checks if in the debug mode.
 	 * @returns {boolean} Boolean true if in the debug mode
@@ -86,7 +86,7 @@ export class Util {
 		}
 		console.debug(message);
 	}
-	
+
 	/**
 	 * Sleeps for the given amount of time.
 	 * @param {number} milliseconds sf
@@ -99,7 +99,7 @@ export class Util {
 	/**
 	 * Searches for a file in the given dir recursively.
 	 * @async
-	 * @param {string} dir path 
+	 * @param {string} dir path
 	 * @param {string} fileName searched filename
 	 * @returns {string} file path | unknown
 	 */
@@ -112,13 +112,13 @@ export class Util {
 				break;
 			}
 		}
-	
+
 		return matchedFile;
 	}
 }
 
 /**
- * Private NodeConfig implementation. 
+ * Private NodeConfig implementation.
  */
 class NodeConfigImpl implements NodeConfig {
 	// the node supported protocol
@@ -127,7 +127,7 @@ class NodeConfigImpl implements NodeConfig {
 	private static readonly defaultNodeUrl = new URL("localhost:7888"); // NOI18N
 	// the configuration ket, it uses to store configuration in context.workspaceState
 	private static readonly nodeUrlKey: string = "PYRSIA_NODE_URL_KEY"; // NOI18N
-	
+
 	private nodeUrl: URL;
 	private workspaceState: vscode.Memento;
 
@@ -136,7 +136,7 @@ class NodeConfigImpl implements NodeConfig {
 		const nodeUrl: string | undefined = workspaceState.get(NodeConfigImpl.nodeUrlKey);
 		this.url = !nodeUrl ? this.defaultUrl : new URL(nodeUrl);
 	}
-	
+
 	get defaultUrl(): URL {
 		return NodeConfigImpl.defaultNodeUrl;
 	}
@@ -144,7 +144,7 @@ class NodeConfigImpl implements NodeConfig {
 	get hostWithProtocol(): string {
 		let host = this.nodeUrl.href;
 		if (!host.toLocaleLowerCase().startsWith(NodeConfigImpl.protocol)) {
-			host = `${NodeConfigImpl.protocol}://${host}`; 
+			host = `${NodeConfigImpl.protocol}://${host}`;
 		}
 
 		return host;

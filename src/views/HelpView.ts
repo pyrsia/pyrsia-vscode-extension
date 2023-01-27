@@ -90,7 +90,7 @@ class HelpTreeProvider implements vscode.TreeDataProvider<string> {
  * Help Tree Item
  */
 class HelpTreeItem extends vscode.TreeItem {
-	
+
 	private static readonly properties = {
 		[HelpProperty.Install.toLowerCase()]: {
 			iconPath: new vscode.ThemeIcon("getting-started-beginner"), // NOI18N

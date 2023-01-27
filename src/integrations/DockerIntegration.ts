@@ -15,7 +15,7 @@ export class DockerIntegration implements Integration {
 	static readonly confirmOption = "Yes";
 	static readonly cancelOption = "No";
 	static readonly closeOption = "Close";
-	
+
 	// command Ids
 	static readonly updateDockerConfCommandId = "pyrsia.docker.update-config"; // NOI18N
 	static readonly reloadDockerImagesCommandId = "pyrsia.docker.replace-images"; // NOI18N
@@ -38,7 +38,7 @@ export class DockerIntegration implements Integration {
 	private static dockerConfigPathsMap: Map<string, string> = new Map<string, string>();
 	// Used in the docker configuration logic (the property we have to update)
 	private static readonly registryMirrorsName = "registry-mirrors";
-	
+
 	// 'static' tree items props
 	private static readonly mainTreeItemName = "Docker";
 	private static readonly configTreeItemName = "Configuration";
@@ -53,11 +53,11 @@ export class DockerIntegration implements Integration {
 		// TODO add support for windows!
 		DockerIntegration.dockerConfigPathsMap.set(path.join(os.homedir(), ".docker"), "daemon.json");
 	}
-	
+
 	constructor(context: vscode.ExtensionContext) {
 		// get the icon info for the main tree item (Docker)
 		this.mainTreeItemIconPath = {
-			dark: path.join(Util.getResourceImagePath(), "docker_small_dark.svg"), 
+			dark: path.join(Util.getResourceImagePath(), "docker_small_dark.svg"),
 			light: path.join(Util.getResourceImagePath(), "docker_small_dark.svg") //TODO create the "light" icon
 		};
 
@@ -111,7 +111,7 @@ export class DockerIntegration implements Integration {
 					// if the image has containers go to hell (skip it and warn the user)
 					if (containers.length > 0) {
 						vscode.window.showErrorMessage(
-							`Reloading the '${imageName}' docker image 
+							`Reloading the '${imageName}' docker image
 							failed because it has container(s) attached, please remove the container(s) and try again.`,
 							DockerIntegration.closeOption
 						);
@@ -123,7 +123,7 @@ export class DockerIntegration implements Integration {
 						if (error) {
 							// something went wrong, warn the user then go to the next image
 							vscode.window.showErrorMessage(
-								`Reloading the '${imageName}' docker image 
+								`Reloading the '${imageName}' docker image
 								failed, Error: ${error}`,
 								DockerIntegration.closeOption
 							);
@@ -238,7 +238,7 @@ export class DockerIntegration implements Integration {
 		// update the Docker tree item in case Docker or node is down
 		const dockerTreeItem = this.treeItems.get(DockerIntegration.integrationId);
 		if (dockerTreeItem && (!isDockerUp || !isPyrsiaNodeUp)) {
-			// create warning tree item and hide the rest of the tree items 
+			// create warning tree item and hide the rest of the tree items
 			dockerTreeItem.label = `${DockerIntegration.mainTreeItemName} (Pyrsia Node or Docker is unavailable)`;
 			dockerTreeItem.tooltip = "Please make sure that Docker service and Pyrsia node is up and configured";
 			dockerTreeItem.iconPath = DockerIntegration.warningIconPath;
@@ -408,7 +408,7 @@ export class DockerIntegration implements Integration {
 				}
 			}
 		);
-		
+
 		// request docker image build
 		const requestDockerImageBuild = vscode.commands.registerCommand(
 			DockerIntegration.requestBuildId,
