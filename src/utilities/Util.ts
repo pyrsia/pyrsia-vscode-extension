@@ -8,9 +8,35 @@ import { readdir } from "fs/promises";
  * Utility static method (don't create instances)
  */
 export class Util {
+	public static readonly setConnectedContextId = "setContext";
+	private static readonly nodeConnectionStatusKey: string = "pyrsia.connection.status"; // NOI18N
 	private static resourcePath: string;
 	private static config: NodeConfig;
 	private static dockerClient: DockerClient;
+	private static globalState: vscode.Memento;
+
+	/**
+	 * Node connections status, indicates if the provided node URL can be used to reach a Pyrsia node.
+	 * @returns {boolean} if Pyrsia node connected returns 'true'
+	 */
+	public static get nodeConnected(): boolean | undefined {
+		if (!this.globalState) {
+			throw new Error("Global state not available");
+		}
+
+		return this.globalState.get(this.nodeConnectionStatusKey);
+	}
+
+	/**
+	 * Node connections status, indicates if the provided node URL can be used to reach a Pyrsia node.
+	 * @param {boolean} nodeConnected - Pyrsia node connection status
+	 */
+	public static set nodeConnected(nodeConnected: boolean | undefined) {
+		if (!this.globalState) {
+			throw new Error("Global state not available");
+		}
+		vscode.commands.executeCommand(this.setConnectedContextId, this.nodeConnectionStatusKey, nodeConnected);
+	}
 
 	/**
 	 * It's called once to pass the init values.
@@ -24,7 +50,8 @@ export class Util {
 		// set the resource path
 		Util.resourcePath = context.asAbsolutePath(path.join('resources')); // NOI18N
 		// load the configuration from the context (context is used to store the node configuration - e.g URL)
-		this.config = new NodeConfigImpl(context.workspaceState);
+		this.config = new NodeConfigImpl(context.globalState);
+		this.globalState = context.globalState;
 
 		return this;
 	}
@@ -121,20 +148,27 @@ export class Util {
  * Private NodeConfig implementation.
  */
 class NodeConfigImpl implements NodeConfig {
+	public static readonly nodeConnectionConfiguredKey: string = "pyrsia.connection.configured"; // NOI18N
 	// the node supported protocol
 	private static readonly protocol = "http"; // NOI18N
 	// default node URL
 	private static readonly defaultNodeUrl = new URL("localhost:7888"); // NOI18N
-	// the configuration ket, it uses to store configuration in context.workspaceState
-	private static readonly nodeUrlKey: string = "PYRSIA_NODE_URL_KEY"; // NOI18N
+	// the configuration ket, it uses to store configuration in context.globalState
+	private static readonly nodeUrlKey: string = "pyrsia.node.url"; // NOI18N
 
 	private nodeUrl: URL;
-	private workspaceState: vscode.Memento;
+	private globalState: vscode.Memento;
 
-	constructor(workspaceState: vscode.Memento) {
-		this.workspaceState = workspaceState;
-		const nodeUrl: string | undefined = workspaceState.get(NodeConfigImpl.nodeUrlKey);
-		this.url = !nodeUrl ? this.defaultUrl : new URL(nodeUrl);
+	constructor(globalState: vscode.Memento) {
+		this.globalState = globalState;
+		const nodeUrl: string | undefined = globalState.get(NodeConfigImpl.nodeUrlKey);
+		try {
+			this.url = !nodeUrl ? this.defaultUrl : new URL(nodeUrl);
+		} catch (error) {
+			// something is wrong, reset the url to the default value
+			console.error(error);
+			this.url = this.defaultUrl;
+		}
 	}
 
 	get defaultUrl(): URL {
@@ -172,6 +206,11 @@ class NodeConfigImpl implements NodeConfig {
 		} else {
 			this.nodeUrl = nodeUrl || NodeConfigImpl.defaultNodeUrl;
 		}
-		this.workspaceState.update(NodeConfigImpl.nodeUrlKey, this.nodeUrl);
+		// set node url
+		vscode.commands.executeCommand(Util.setConnectedContextId, NodeConfigImpl.nodeUrlKey, this.nodeUrl.href);
+		this.globalState.update(NodeConfigImpl.nodeUrlKey, this.nodeUrl.href);
+		// set connection configured
+		vscode.commands.executeCommand(Util.setConnectedContextId, NodeConfigImpl.nodeConnectionConfiguredKey, true);
+		this.globalState.update(NodeConfigImpl.nodeConnectionConfiguredKey, true);
 	}
 }
