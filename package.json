@@ -1,0 +1,161 @@
+{
+  "name": "pyrsia-extension",
+  "displayName": "Pyrsia",
+  "description": "Pyrsia VS Code Extension",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pyrsia/pyrsia-vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "pyrsia",
+          "title": "Pyrsia",
+          "icon": "resources/images/pyrsia_white.svg"
+        }
+      ]
+    },
+    "views": {
+      "pyrsia": [
+        {
+          "id": "pyrsia.node-config",
+          "name": "Node Status"
+        },
+        {
+          "id": "pyrsia.node-integrations",
+          "name": "Integrations"
+        },
+        {
+          "id": "pyrsia.help",
+          "name": "Help nad Feedback"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "pyrsia.docker.replace-images",
+        "title": "Reload Docker Images with Pyrsia",
+        "shortTitle": "Replace images",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "pyrsia.node-config.update-url",
+        "title": "Update Pyrsia Node URL",
+        "shortTitle": "Update Pyrsia node URL",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "pyrsia.docker.update-config",
+        "title": "Open Docker Configuration",
+        "shortTitle": "Open and Update Docker Configuration",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "pyrsia.docker.request-build",
+        "title": "Add Image to Pyrsia",
+        "shortTitle": "Add selected image to Pyrsia",
+        "icon": "$(server-environment)"
+      },
+      {
+        "command": "pyrsia.docker.open-trans-log",
+        "title": "Open Pyrsia Transparency Log",
+        "shortTitle": "Open Pyrsia Transparency Log",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "pyrsia.integrations.update",
+        "title": "Refresh",
+        "shortTitle": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "pyrsia.node-config.update-view",
+        "title": "Refresh",
+        "shortTitle": "Refresh",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "pyrsia.integrations.update",
+          "when": "view == pyrsia.node-integrations",
+          "group": "navigation"
+        },
+        {
+          "command": "pyrsia.node-config.update-view",
+          "when": "view == pyrsia.node-config",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+          {
+            "command": "pyrsia.docker.replace-images",
+            "when": "view == pyrsia.node-integrations && viewItem == pyrsia.docker",
+            "group": "pyrsia-integration"
+          },
+          {
+            "command": "pyrsia.node-config.update-url",
+            "when": "view == pyrsia.node-config",
+            "group": "pyrsia-config"
+          },
+          {
+            "command": "pyrsia.docker.update-config",
+            "when": "view == pyrsia.node-integrations && viewItem == pyrsia.docker.config-file",
+            "group": "pyrsia-integration"
+          },
+          {
+            "command": "pyrsia.docker.request-build",
+            "when": "view == pyrsia.node-integrations && viewItem == pyrsia.docker.not-pyrsia",
+            "group": "pyrsia-integration"
+          },
+          {
+            "command": "pyrsia.docker.open-trans-log",
+            "when": "view == pyrsia.node-integrations && viewItem == pyrsia.docker.is-pyrsia",
+            "group": "pyrsia-integration"
+          }
+      ]
+  }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/dockerode": "^3.3.14",
+    "@types/glob": "^8.0.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.73.1",
+    "@typescript-eslint/eslint-plugin": "^5.47.0",
+    "@typescript-eslint/parser": "^5.47.0",
+    "@vscode/test-electron": "^2.2.0",
+    "eslint": "^8.30.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.1.0",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "@vscode/webview-ui-toolkit": "^1.2.0",
+    "axios": "^1.2.1",
+    "dockerode": "3.3.4",
+    "fs": "^0.0.1-security",
+    "os": "^0.1.2"
+  }
+}

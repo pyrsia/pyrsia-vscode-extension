@@ -1,0 +1,25 @@
+name: Pyrsia VS Code Extension Merge Check (build, lint, test)
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 19
+      - run: sudo apt-get install xvfb
+      - run: npm install
+      - run: npm run compile
+      - run: npm run lint
+      - run: xvfb-run --auto-servernum npm run test
