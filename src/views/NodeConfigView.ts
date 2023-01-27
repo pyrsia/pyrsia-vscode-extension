@@ -103,7 +103,8 @@ export class NodeConfigView {
 	public update(): void {
 		this.treeViewProvider.update();
 		client.isNodeHealthy().then((healthy) => {
-			healthy ? this.view.title = "NODE STATUS  🟩" : this.view.title = "NODE STATUS  🟥";
+			healthy ? this.view.title = "NODE STATUS  🟢" : this.view.title = "NODE STATUS  🔴";
+			Util.nodeConnected = healthy;
 		});
 	}
 
@@ -204,7 +205,7 @@ class NodeTreeItem extends vscode.TreeItem {
 				onUpdate: async (treeItem: NodeTreeItem) => {
 					const healthy: boolean = await client.isNodeHealthy();
 					const { host } = Util.getNodeConfig();
-					const status: string = healthy ? `Connected to Pyrsia node '${host}'` : `Failed connecting to Pyrsia node: '${host}'`;
+					const status: string = healthy ? `Connected to Pyrsia: '${host}'` : `Failed connecting to Pyrsia node: '${host}'`;
 					treeItem.label = status;
 					treeItem.iconPath = healthy ? NodeTreeItem.cloudIcon : NodeTreeItem.brokenConnectionIcon;
 					treeItem.command = { command: NodeConfigView.configNodeCommandId, title: "Configure Pyrsia Node" };
