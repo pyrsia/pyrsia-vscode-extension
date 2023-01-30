@@ -65,12 +65,12 @@ export class ConnectionStatusBar {
 		);
 		context.subscriptions.push(configureNodeCommand);
 		// update the status bar
-		this.requestUpdateStatusBar()
+		this.requestUpdateStatusBar();
 	}
 
 	public async requestUpdateStatusBar() {
 		const connected: boolean = await client.isNodeHealthy();
-		this.statusBar.text = connected ? "🟢 Pyrsia Connected" : "🔴 Pyrsia Disconnected";
+		this.statusBar.text = connected ? "🟢 Pyrsia" : "🔴 Pyrsia";
 		this.statusBar.show();
 		Util.nodeConnected = connected;
 	}
