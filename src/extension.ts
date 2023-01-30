@@ -6,6 +6,9 @@ import { Integration } from "./api/Integration";
 import { DockerIntegration } from "./integrations/DockerIntegration";
 import { ConnectionStatusBar } from "./views/ConnectionStatusBar";
 
+// This const is used for how often we should check if the Pyrsia node is online
+const REFRESH_UI_INTERVAL = 60 * 1000;
+
 export const activate = (context: vscode.ExtensionContext) => {
 	// Init the extension utils
 	Util.init(context);
@@ -30,7 +33,7 @@ export const activate = (context: vscode.ExtensionContext) => {
 		// update the integrations
 		IntegrationsView.requestIntegrationsUpdate();
 		IntegrationsView.requestIntegrationsViewUpdate();
-	}, 10000);
+	}, REFRESH_UI_INTERVAL);
 };
 
 export const deactivate = () => {
