@@ -82,7 +82,7 @@ export class ConnectionStatusBar {
 			vscode.window.showInformationMessage(`Connected, Pyrsia node '${nodeConfig.host}'`);
 		} else {
 			const connectOptions = "Connect";
-			const result = await vscode.window.showErrorMessage(`Not connect, Pyrsia node '${nodeConfig.host}'`, connectOptions);
+			const result = await vscode.window.showErrorMessage(`Not connected, Pyrsia node '${nodeConfig.host}'`, connectOptions);
 			if (result === connectOptions) {
 				vscode.commands.executeCommand(ConnectionStatusBar.configNodeCommandId);
 			}
