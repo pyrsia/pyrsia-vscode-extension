@@ -58,8 +58,8 @@ export class ConnectionStatusBar {
 				// check the new url connection
 				const healthy = await client.isNodeHealthy();
 				if (!healthy) {
-					vscode.window.showErrorMessage(`Not able to connect to Pyrsi node '${Util.getNodeConfig().url}',
-					please make sure the Pyrsia is node is online.'`);
+					vscode.window.showErrorMessage(`Cannot connect to Pyrsi node: '${Util.getNodeConfig().url}',
+					please make sure the Pyrsia node is available.'`);
 				}
 			}
 		);
@@ -79,10 +79,10 @@ export class ConnectionStatusBar {
 		const connected: boolean = await client.isNodeHealthy();
 		const nodeConfig = Util.getNodeConfig();
 		if (connected) {
-			vscode.window.showInformationMessage(`Connected, Pyrsia node '${nodeConfig.host}'`);
+			vscode.window.showInformationMessage(`Connected, Pyrsia node: '${nodeConfig.host}'`);
 		} else {
 			const connectOptions = "Connect";
-			const result = await vscode.window.showErrorMessage(`Not connected, Pyrsia node '${nodeConfig.host}'`, connectOptions);
+			const result = await vscode.window.showErrorMessage(`Not connected, Pyrsia node: '${nodeConfig.host}'`, connectOptions);
 			if (result === connectOptions) {
 				vscode.commands.executeCommand(ConnectionStatusBar.configNodeCommandId);
 			}
