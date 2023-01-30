@@ -44,7 +44,7 @@
         {
           "id": "pyrsia.node-status",
           "name": "Connect to Pyrsia",
-          "when": "pyrsia.connection.status == false || !pyrsia.connection.status"
+          "when": "!pyrsia.connection.status"
         },
         {
           "id": "pyrsia.node-integrations",
