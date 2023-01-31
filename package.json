@@ -18,6 +18,18 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsWelcome": [
+      {
+          "view": "pyrsia.node-status",
+          "contents": "Thank you for installing the Pyrsia extension! \nIf you already have a Pyrsia node [installed and running](https://pyrsia.io/docs/tutorials/quick-installation), please connect it to VS Code:\n[Connect to Pyrsia](command:pyrsia.node-config.update-url)\n👋 Don't have a Pyrsia installed? [Download it here!](https://pyrsia.io/docs/tutorials/quick-installation)",
+          "when": "!pyrsia.connection.configured"
+      },
+      {
+        "view": "pyrsia.node-status",
+        "contents": "👋 Is Pyrsia node offline? \nIf you already have a Pyrsia node [installed and running](https://pyrsia.io/docs/tutorials/quick-installation), please connect it to VS Code:\n[Connect to Pyrsia](command:pyrsia.node-config.update-url)\nDon't have a Pyrsia node installed? [Download it here!](https://pyrsia.io/docs/tutorials/quick-installation)",
+        "when": "pyrsia.connection.configured && pyrsia.connection.status == false"
+    }
+  ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -30,8 +42,9 @@
     "views": {
       "pyrsia": [
         {
-          "id": "pyrsia.node-config",
-          "name": "Node Status"
+          "id": "pyrsia.node-status",
+          "name": "Connect to Pyrsia",
+          "when": "!pyrsia.connection.status"
         },
         {
           "id": "pyrsia.node-integrations",
