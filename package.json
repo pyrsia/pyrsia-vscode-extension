@@ -26,7 +26,7 @@
       },
       {
         "view": "pyrsia.node-status",
-        "contents": "👋 Pyrsia node is offline? \nIf you already have a Pyrsia node [installed and running](https://pyrsia.io/docs/tutorials/quick-installation), please connect it to VS Code:\n[Connect to Pyrsia](command:pyrsia.node-config.update-url)\nDon't have a Pyrsia installed? [Download it here!](https://pyrsia.io/docs/tutorials/quick-installation)",
+        "contents": "👋 Is Pyrsia node offline? \nIf you already have a Pyrsia node [installed and running](https://pyrsia.io/docs/tutorials/quick-installation), please connect it to VS Code:\n[Connect to Pyrsia](command:pyrsia.node-config.update-url)\nDon't have a Pyrsia node installed? [Download it here!](https://pyrsia.io/docs/tutorials/quick-installation)",
         "when": "pyrsia.connection.configured && pyrsia.connection.status == false"
     }
   ],
