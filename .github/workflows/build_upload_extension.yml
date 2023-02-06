@@ -1,9 +1,16 @@
 name: Pyrsia VS Code Extension build and upload extension's binaries
 
 on:
-  schedule:
-    # scheduled twice a week
-    - cron: '* * * * 1,5'
+#  schedule:
+#    # scheduled at 3PM and 3AM daily
+#    - cron: '0 3,15 * * *'
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,5 +24,15 @@ jobs:
       - run: npm run compile
       - run: npm run lint
       - run: xvfb-run --auto-servernum npm run test
-      - run: npm install -g @vscode/vsce
-      - run: vsce package -o "pyrsia_vs_code_`date +%Y_%m_%d`.vsix" --allow-star-activation
+      # Login to GCS
+      - name: Google Auth
+        uses: 'google-github-actions/auth@v1'
+        with:
+          workload_identity_provider: 'projects/679352079717/locations/global/workloadIdentityPools/pyrsia-pool/providers/github-provider'
+          service_account: 'pyrsia-ghaction@pyrsia-sandbox.iam.gserviceaccount.com'
+      # Add gsutils
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v1'
+      # Add the updated the vs code extension binary NIGHTLY
+      - name: Add the vs code extension binary to the vsrepo NIGHTLY repo
+        run: .github/workflows/extension_museum.sh nightly
