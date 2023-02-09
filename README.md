@@ -42,7 +42,7 @@ To debug the tests, in the Activity Bar select "Run and Debug" and make sure the
 
 ## How to package, install and uninstall Pyrsia extension in the IDE
 
-The Pyrsia extension is not available in the VS Code store yet, it's necessary to manually install the extension as described below.
+The Pyrsia extension is not yet listed in the VS Code marketplace. For now it can still be installed manually following the instructions outlined below.
 
 ### Install extension (side-load extension)
 
