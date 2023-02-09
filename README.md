@@ -62,7 +62,7 @@ The Pyrsia extension is not yet listed in the VS Code marketplace. For now it ca
     npm install -g @vscode/vsce
     ```
 
-- In the extension repository folder package the extension as follows.
+- Package the extension in the extension repository folder as follows.
 
     ```sh
    vsce package --allow-star-activation --ignoreFile .vscodeignore --pre-release
