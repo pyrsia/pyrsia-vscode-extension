@@ -42,9 +42,19 @@ To debug the tests, in the Activity Bar select "Run and Debug" and make sure the
 
 ## How to package, install and uninstall Pyrsia extension in the IDE
 
-The Pyrsia extension is not available in the VS Code store yet, it's necessary to manually install the extension as described below.
+The Pyrsia extension is not yet listed in the VS Code marketplace. For now it can still be installed manually following the instructions outlined below.
 
-### Package and Install (side-load extension)
+### Install extension (side-load extension)
+
+- Download the latest version of the extension (vsix file) from the [project release page](https://github.com/pyrsia/pyrsia-vscode-extension/releases).
+
+- Close the IDE and install the extension using the `vsix` file downloaded in the previous step.
+
+    ```sh
+    code --install-extension <PYRSIA_VSIX_FILE_PATH>
+    ```
+
+### Build package and install extension from the local repository  (side-load extension)
 
 - Install [Visual Studio Code Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#vsce) with the following command.
 
@@ -52,10 +62,10 @@ The Pyrsia extension is not available in the VS Code store yet, it's necessary t
     npm install -g @vscode/vsce
     ```
 
-- In the extension repository folder package the extension as follows.
+- Package the extension in the extension repository folder as follows.
 
     ```sh
-    vsce package
+   vsce package --allow-star-activation --ignoreFile .vscodeignore --pre-release
     ```
 
 - If the packaging was successful the last line of the VSCE logs should contain the `vsix` file path, for example:
@@ -64,12 +74,12 @@ The Pyrsia extension is not available in the VS Code store yet, it's necessary t
     DONE  Packaged: /home/joed/repositories/pyrsia-vscode-extension/pyrsia-integration-0.0.1.vsix (960 files, 2.2MB)
     ```
 
-- Copy the `vsix` file path and install the extension as follows.
+- Close the IDE and install the extension using the `vsix` file path from the previous step.
 
     ```sh
     code --install-extension <PYRSIA_VSIX_FILE_PATH>
     ```
-
+  
 ### Uninstall (side-load)
 
 - Find the extension in the list of the extensions (look for "pyrsia", for example `undefined_publisher.pyrsia-integration`).

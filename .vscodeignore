@@ -1,0 +1,12 @@
+.github
+.idea
+.vscode
+.vscode-test
+src
+.eslintrc.cjs
+.gitignore
+.vscodeignore
+package.json
+package-lock.json
+pre-commit.sh
+tsconfig.json
