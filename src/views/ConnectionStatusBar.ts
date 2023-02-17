@@ -58,7 +58,7 @@ export class ConnectionStatusBar {
 				// check the new url connection
 				const healthy = await client.isNodeHealthy();
 				if (!healthy) {
-					vscode.window.showErrorMessage(`Cannot connect to Pyrsi node: '${Util.getNodeConfig().url}',
+					vscode.window.showErrorMessage(`Cannot connect to Pyrsia node: '${Util.getNodeConfig().url}',
 					please make sure the Pyrsia node is available.'`);
 				}
 			}
